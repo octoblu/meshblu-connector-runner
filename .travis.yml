@@ -1,12 +1,23 @@
-language: node_js
+language: shell
 os:
 - linux
 - osx
-node_js:
-- '5'
 addons:
   code_climate:
     repo_token: "8239f2b4de7a1e91bf3be1555018d03159a7bbe0d939a5cf233f493a21709f65"
+before_script:
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then npm install -g codeclimate-test-reporter; fi
+after_script:
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; codeclimate-test-reporter < coverage/lcov.info; fi
+before_install:
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install nvm; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then source $(brew --prefix nvm)/nvm.sh; fi
+- nvm install 5
+- npm install -g npm
+install:
+- npm install
+script:
+- if [ "$TRAVIS_OS_NAME" != "osx" ]; then npm test; fi
 before_script:
 - npm install -g codeclimate-test-reporter
 after_script:
