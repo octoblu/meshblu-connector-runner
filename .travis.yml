@@ -3,13 +3,27 @@ node_js:
 - '5'
 addons:
   code_climate:
-    repo_token: "<REPO TOKEN GOES HERE>"
+    repo_token: "8239f2b4de7a1e91bf3be1555018d03159a7bbe0d939a5cf233f493a21709f65"
 before_script:
 - npm install -g codeclimate-test-reporter
 after_script:
 - codeclimate-test-reporter < coverage/lcov.info
+before_deploy:
+- curl -fsSL https://meshblu-connector.octoblu.com/scripts/deployer/latest/raw/build.sh | sh
 deploy:
-  provider: npm
+- provider: s3
+  access_key_id: AKIAJH2D5IPIRHYJT5IA
+  secret_access_key:
+    secure: "kw4TmH4hZiYRwpxoNm5iUee3M1Qewoor1N94V0Vb3wItaxDV419p1FDHlsHQR0yEAqLg/WU4y7RwpzieXFWBMa45ZwD0ub71DQqne8mr3MlpkZASUgxRhKlo4rsGYdbuoeNlNODGoI0KeM+BfwvaYmQTjWkgaRtdVdsNM+zC/U8CB4bNi7bGPuiwWy8p7+OuM2tFljdaiT8vzm9ZNzBC84UyDc9MgQQfCmxQuGlskPE8OOdBCf1h0YTi1Tyl+Wd33ppuV8VcXoP+ec5G1j+Ox6G+X9tHQNox5X6gq0LL3fKhajlPqtteI91I1uF74fXKlj3rWdX1nzBcJnyF50Gevw/xG9ZH2i+oGqVDDUG2+khVu/U8bMFAEF5VihXbkPPkldn3JkeYYnDWWp3krhuM3xXo/fsXJel6NndnAcDKRBJ7t6wUPWvPzT+tQL5sVQpfbNsgL8OkuhPPWf55S/BzaBySPjLch12bpPJhcl+JfVMbkPmjGWHqM0uof3fwl+QPwPGjzJOidkWs3fUA2wCW/nbu2pdDoz/0OcQ/hBAycAPW1Lx6h35JgOR8/iPJSLr6/vjEO7cZavoX8uKGLXZxhs4SbmDyv5Y4qL0k4qYfVZIBI5MYRFWbYc3Y3MM3SrF0/1K/O3ODbeqrk58h5HDJZ+SexBBFbyExa5NzDXbrKj4="
+  bucket: meshblu-connector
+  local-dir: deploy
+  upload-dir: tools
+  region: us-west-2
+  skip_cleanup: true
+  on:
+    tags: true
+    branches: true
+- provider: npm
   email: serveradmin@octoblu.com
   api_key:
     secure: EXSDqzpwmi94VesrWdJlyWCJsz1lI0xlmrnzQLVVJA/nm4+f9P6I4iZ9fmqGk/9uIezT+RYklm3sDlDdVsy1ICZx7SoUyKFsHEJTn+22c3Yjqe/YmePKNk5Lre/Rob/OLD6kOPB3/W5NixxUchWdb6dsd6r08KFSXSeBIZO7GKbUha57GXggOkySUyXg4kjHwV57KQBYjJ2O/bphbSPBdGEt9wXem4Dh0RCtn3NDLdUKwO1x/c71fBtHNM8J+xwQbmhmx5qKRHRgr97aMK43yX/qR1ghKaA8iPizoYxtprktLYoyK6+TduRaf+5W8i6WfZS7mXDKdq6wWfty5pqiOOtqE4CF/Qqx4zS3u7WLnjn1wNFKNMr2s8bFxRbN3oRX3+o0OlpAyGEbL6iWzddA+tkfhRNeUZ95aWLYkNyXiI0Ev71tYjRt/puY9B198yRgYPWBedMQJL1CDPUrxCm/CKkOi4zIuPoxcrvbBLWRDRHeKPVL3N/nDxfvAdqSATLelHDGTyrqyizRQJRn+8mVKe3r6bpzcoJr3jH+9lTKwUGg+ge3PdwJpgn7cooRe9rb1vKkbjfmuuYlv/PItc3cAuEdSZSSqZq5D3Q4kTxCgTKqkCej8GUxWfpCWbongSVq4vXoXVZSxB+JCETaDN62hqYlOhnGS+AKgzf3x075jI0=
