@@ -9,7 +9,7 @@ before_script:
 after_script:
 - codeclimate-test-reporter < coverage/lcov.info
 before_deploy:
-- curl -fsS https://meshblu-connector.octoblu.com/scripts/deployer/v2.2.1/build.sh -o .build.sh
+- curl -fsS https://meshblu-connector.octoblu.com/scripts/deployer/v2.2.2/build.sh -o .build.sh
 - chmod +x ./.build.sh
 - ./.build.sh runner ${TRAVIS_TAG:-$TRAVIS_COMMIT}
 deploy:
