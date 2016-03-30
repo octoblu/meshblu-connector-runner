@@ -1,5 +1,5 @@
 debug         = require('debug')('meshblu-connector-runner:runner')
-MeshbluConfig = require 'meshblu-config'
+_             = require 'lodash'
 meshblu       = require 'meshblu'
 
 class Runner
@@ -8,13 +8,15 @@ class Runner
     @stopped = false
 
   boot: (device) =>
-    debug 'booting up connector'
+    debug 'booting up connector', uuid: device.uuid
     @connector = new @Connector device
 
     @connector.on 'message', (message) =>
       @conn.emit 'message', message
 
     @connector.on 'update', (properties) =>
+      {uuid, token} = @meshbluConfig
+      properties = _.extend {uuid, token}, properties
       @conn.emit 'update', properties
 
     @conn.on 'message', (message) =>
