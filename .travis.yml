@@ -23,9 +23,9 @@ before_script:
 after_script:
 - codeclimate-test-reporter < coverage/lcov.info
 before_deploy:
-- curl -fsS https://meshblu-connector.octoblu.com/scripts/deployer/v3.0.0/build.sh -o .build.sh
+- curl -fsS https://meshblu-connector.octoblu.com/tools/packager/v4.0.0/build.sh -o .build.sh
 - chmod +x ./.build.sh
-- ./.build.sh runner ${TRAVIS_TAG:-$TRAVIS_COMMIT} $TRAVIS_OS_NAME
+- ./.build.sh bean ${TRAVIS_TAG:-$TRAVIS_COMMIT} $TRAVIS_OS_NAME
 deploy:
 - provider: s3
   access_key_id: AKIAJH2D5IPIRHYJT5IA
