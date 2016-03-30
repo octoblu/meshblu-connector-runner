@@ -9,15 +9,19 @@ class Runner
 
   boot: (device) =>
     debug 'booting up connector', uuid: device.uuid
-    @connector = new @Connector device
+    @connector = new @Connector()
 
     @connector.on 'message', (message) =>
+      debug 'sending message', message
       @conn.emit 'message', message
 
     @connector.on 'update', (properties) =>
+      debug 'sending update', properties
       {uuid, token} = @meshbluConfig
       properties = _.extend {uuid, token}, properties
       @conn.emit 'update', properties
+
+    @connector.start device
 
     @conn.on 'message', (message) =>
       debug 'on message', message
