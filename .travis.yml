@@ -5,6 +5,9 @@ os:
 addons:
   code_climate:
     repo_token: "8239f2b4de7a1e91bf3be1555018d03159a7bbe0d939a5cf233f493a21709f65"
+branches:
+  only:
+  - "/^v[0-9]/"
 before_script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then npm install -g codeclimate-test-reporter; fi
 after_script:
