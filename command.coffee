@@ -1,20 +1,32 @@
 _             = require 'lodash'
 fs            = require 'fs'
 path          = require 'path'
-Runner        = require './runner'
+Runner        = require './src/runner'
 MeshbluConfig = require 'meshblu-config'
 
 class Command
   run: =>
-    return @die new Error 'Missing connector path' if _.size(process.argv) <= 2
-    connectorPath = _.last process.argv
-    connectorPath = path.resolve connectorPath
-    packageJSONPath = path.join(connectorPath, 'package.json')
-    return @die new Error 'Invalid connector, missing package.json' unless fs.existsSync connectorPath
+    connectorPath = @getConnectorPath()
+    @isValidConnector({ connectorPath })
+
     meshbluConfig = new MeshbluConfig({}).toJSON()
-    return @die new Error 'Missing uuid and token' unless meshbluConfig.uuid or meshbluConfig.token
+    @isValidMeshbluConfig(meshbluConfig)
+
     runner = new Runner {meshbluConfig, connectorPath}
     runner.run()
+
+  getConnectorPath: =>
+    connectorPath = _.last process.argv[2..]
+    connectorPath = path.resolve connectorPath if connectorPath?
+    connectorPath ?= process.cwd()
+    return connectorPath
+
+  isValidConnector: ({ connectorPath })=>
+    packageJSONPath = path.join(connectorPath, 'package.json')
+    @die new Error 'Invalid connector, missing package.json' unless fs.existsSync connectorPath
+
+  isValidMeshbluConfig: ({ uuid, token }) =>
+    @die new Error 'Missing uuid and token' unless uuid? or token?
 
   die: (error)=>
     process.exit 0 unless error?
