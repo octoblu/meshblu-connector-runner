@@ -1,8 +1,8 @@
 {
   "name": "meshblu-connector-runner",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Meshblu connector runner",
-  "main": "index.js",
+  "main": "command.js",
   "scripts": {
     "test": "istanbul cover _mocha -- -R spec --require coffee-coverage/register-istanbul"
   },
