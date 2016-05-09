@@ -1,3 +1,9 @@
 #!/usr/bin/env node
-require('coffee-script/register')
-require('./command.coffee')
+'use strict';
+require('coffee-script/register');
+
+var Command, command;
+
+Command = require('./src/command.coffee');
+command = new Command({argv: process.argv});
+command.run();
