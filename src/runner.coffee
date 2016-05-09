@@ -14,28 +14,28 @@ class Runner
     debug 'booting up connector', uuid: device.uuid
     @connector = new @Connector()
 
-    @connector.on 'message', (message) =>
+    @connector.on? 'message', (message) =>
       debug 'sending message', message
-      @conn.emit 'message', message
+      @meshblu.emit 'message', message
 
-    @connector.on 'update', (properties) =>
+    @connector.on? 'update', (properties) =>
       debug 'sending update', properties
       {uuid, token} = @meshbluConfig
       properties = _.extend {uuid, token}, properties
-      @conn.update properties
+      @meshblu.update properties
 
-    @connector.start device
+    @connector.start? device
 
-    @conn.on 'message', (message) =>
+    @meshblu.on 'message', (message) =>
       debug 'on message', message
       return if message.topic == 'pong'
       return @checkOnline() if message.topic == 'ping'
-      @connector.onMessage message
+      @connector.onMessage? message
 
-    @conn.on 'config', (device) =>
+    @meshblu.on 'config', (device) =>
       debug 'on config'
       @closeIfNeeded device, =>
-        @connector.onConfig device
+        @connector.onConfig? device
 
   _checkOnline: =>
     debug 'checking online'
@@ -47,7 +47,7 @@ class Runner
   close: =>
     debug 'closing'
     return unless @connector?
-    @connector.close =>
+    @connector?.close =>
       debug 'closed'
       @connector = null
 
@@ -62,15 +62,17 @@ class Runner
 
   run: =>
     debug 'running...'
-    @conn = meshblu.createConnection @meshbluConfig
+    @meshblu = meshblu.createConnection @meshbluConfig
 
-    @conn.once 'ready', =>
-      debug 'on ready'
-      @whoami (error, device) =>
+    @meshblu.once 'ready', =>
+      @meshblu.whoami {}, (device) =>
         @boot device
 
-    @conn.on 'notReady', (error) =>
-      console.error 'Meshblu fired notReady', error
+    @meshblu.on 'error', (error) =>
+      console.error 'meshblu error', error
+      
+    @meshblu.on 'notReady', (error) =>
+      console.error 'message not ready', error
 
   _sendPong: ({ error, response })=>
     debug 'send pong'
@@ -82,15 +84,15 @@ class Runner
       response: response
       error: error
 
-    @conn.emit 'message', message
+    @meshblu.emit 'message', message
     { uuid } = @meshbluConfig
 
     debug 'sending pong', message
-    @conn.update { uuid, lastPong: { response, error, date } }
+    @meshblu.update { uuid, lastPong: { response, error, date } }
 
   whoami: (callback) =>
     debug 'whoami'
-    @conn.whoami {}, (device) =>
+    @meshblu.whoami {}, (device) =>
       @closeIfNeeded device, =>
         callback null, device
 

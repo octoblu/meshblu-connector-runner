@@ -6,7 +6,6 @@ MeshbluConnectorRunner = require './index'
 
 class Command
   constructor: ({argv}) ->
-
     @args = dashdash.parse({argv: argv, options: []})
 
   panic: (error)=>
@@ -31,7 +30,5 @@ class Command
     return process.cwd() unless _.last @args
     connectorPath = _.last @argv
     return path.resolve connectorPath
-
-
 
 module.exports = Command
