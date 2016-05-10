@@ -16,7 +16,7 @@ class Runner
 
     @connector.on? 'message', (message) =>
       debug 'sending message', message
-      @meshblu.emit 'message', message
+      @meshblu.message message
 
     @connector.on? 'update', (properties) =>
       debug 'sending update', properties
@@ -70,7 +70,7 @@ class Runner
 
     @meshblu.on 'error', (error) =>
       console.error 'meshblu error', error
-      
+
     @meshblu.on 'notReady', (error) =>
       console.error 'message not ready', error
 
