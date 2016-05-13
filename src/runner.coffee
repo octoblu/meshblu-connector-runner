@@ -1,12 +1,11 @@
-debug         = require('debug')('meshblu-connector-runner:runner')
 _             = require 'lodash'
 meshblu       = require 'meshblu'
+debug         = require('debug')('meshblu-connector-runner:runner')
 
 class Runner
-  constructor: ({@meshbluConfig, connectorPath}) ->
+  constructor: ({ @meshbluConfig, connectorPath }) ->
     debug 'connectorPath', connectorPath
     @Connector = require connectorPath
-    @stopped = false
     @checkOnline = _.debounce @_checkOnline, 1000, { leading: true }
     @sendPong = _.debounce @_sendPong, 1000, { leading: true }
 
@@ -34,8 +33,7 @@ class Runner
 
     @meshblu.on 'config', (device) =>
       debug 'on config'
-      @closeIfNeeded device, =>
-        @connector.onConfig? device
+      @connector.onConfig? device
 
   _checkOnline: =>
     debug 'checking online'
@@ -46,26 +44,16 @@ class Runner
 
   close: =>
     debug 'closing'
-    return unless @connector?
     @connector?.close =>
       debug 'closed'
       @connector = null
-
-  closeIfNeeded: (device, callback) =>
-    debug 'close if needed', device.stopped, @stopped
-    return callback() if device.stopped == @stopped
-    @stopped = false unless device.stopped?
-    @stopped = device.stopped if device.stopped?
-    debug 'is stopped', @stopped
-    return callback() unless @stopped
-    @close()
 
   run: =>
     debug 'running...'
     @meshblu = meshblu.createConnection @meshbluConfig
 
     @meshblu.once 'ready', =>
-      @meshblu.whoami {}, (device) =>
+      @whoami (error, device) =>
         @boot device
 
     @meshblu.on 'error', (error) =>
@@ -84,7 +72,7 @@ class Runner
       response: response
       error: error
 
-    @meshblu.emit 'message', message
+    @meshblu.message message
     { uuid } = @meshbluConfig
 
     debug 'sending pong', message
@@ -93,7 +81,6 @@ class Runner
   whoami: (callback) =>
     debug 'whoami'
     @meshblu.whoami {}, (device) =>
-      @closeIfNeeded device, =>
-        callback null, device
+      callback null, device
 
 module.exports = Runner
