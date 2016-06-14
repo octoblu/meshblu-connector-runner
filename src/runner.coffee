@@ -1,37 +1,49 @@
-_             = require 'lodash'
-meshblu       = require 'meshblu'
-StatusDevice  = require './status-device'
-debug         = require('debug')('meshblu-connector-runner:runner')
+_              = require 'lodash'
+async          = require 'async'
+meshblu        = require 'meshblu'
+StatusDevice   = require './status-device'
+MessageHandler = require './message-handler'
+debug          = require('debug')('meshblu-connector-runner:runner')
 
 class Runner
-  constructor: ({ @meshbluConfig, connectorPath }) ->
-    debug 'connectorPath', connectorPath
-    @Connector = require connectorPath
-    @checkOnline = _.debounce @_checkOnline, 1000, { leading: true }
+  constructor: ({ @meshbluConfig, @connectorPath }={}) ->
+    throw 'Runner requires meshbluConfig' unless @meshbluConfig?
+    throw 'Runner requires connectorPath' unless @connectorPath?
+    debug 'connectorPath', @connectorPath
+    @Connector = require @connectorPath
+    @checkOnline = _.throttle @_checkOnline, 1000, { leading: true, trailing: false }
 
-  boot: (device) =>
+  boot: (device, callback) =>
     debug 'booting up connector', uuid: device.uuid
-    @connector = new @Connector()
+    @connector = new @Connector
+    @connector.start ?= (callback) => callback()
+    @connector.start device, (error) =>
+      return callback error if error?
 
-    @connector.on? 'message', (message) =>
-      debug 'sending message', message
-      @meshblu.message message
+      @messageHandler = new MessageHandler {@connector, @connectorPath}
 
-    @connector.on? 'update', (properties) =>
-      debug 'sending update', properties
-      {uuid, token} = @meshbluConfig
-      properties = _.extend {uuid, token}, properties
-      @meshblu.update properties
+      @connector.on? 'message', (message) =>
+        debug 'sending message', message
+        @meshblu.message message
 
-    @connector.start? device
+      @connector.on? 'update', (properties) =>
+        debug 'sending update', properties
+        {uuid, token} = @meshbluConfig
+        properties = _.extend {uuid, token}, properties
+        @meshblu.update properties
 
-    @meshblu.on 'message', (message) =>
-      debug 'on message', message
-      @connector.onMessage? message
+      @meshblu.on 'message', (message) =>
+        debug 'on message', message
+        {metadata, fromUuid} = message
+        {respondTo} = metadata ? {}
+        @messageHandler.onMessage message, (error, response) =>
+          @_handleMessageHandlerResponse {fromUuid, error, response}
 
-    @meshblu.on 'config', (device) =>
-      debug 'on config'
-      @connector.onConfig? device
+      @meshblu.on 'config', (device) =>
+        debug 'on config'
+        @connector.onConfig? device
+
+      callback()
 
   _checkOnline: (callback) =>
     debug 'checking online'
@@ -39,22 +51,57 @@ class Runner
     return callback null, running: true unless @connector.isOnline?
     @connector.isOnline callback
 
-  close: =>
+  close: (callback=_.noop) =>
     debug 'closing'
-    @connector?.close =>
-      debug 'closed'
-      @connector = null
+    tasks = [
+      @_closeConnector
+      @_closeMeshblu
+      @_closeStatusDevice
+    ]
+    async.series tasks, callback
 
-  run: =>
+  _closeConnector: (callback) =>
+    debug 'close connector'
+    return callback() unless @connector?
+    @connector.close callback
+
+  _closeMeshblu: (callback) =>
+    debug 'close meshblu'
+    return callback() unless @connector?
+    return callback() unless @meshblu?
+    @meshblu.close callback
+
+  _closeStatusDevice: (callback) =>
+    debug 'close statusDevice'
+    return callback() unless @statusDevice?
+    @statusDevice.close callback
+
+  _handleMessageHandlerResponse: ({fromUuid, error, response}) =>
+    devices = [fromUuid]
+
+    if error?
+      metadata =
+        code: error.code ? 500
+        error: message: error.message
+      metadata.to = respondTo if respondTo?
+      return @meshblu.message {devices, metadata, topic: 'error'}
+
+    unless _.isEmpty response
+      {data, metadata} = response
+      metadata.to = respondTo if respondTo?
+      @meshblu.message {devices, data, metadata, topic: 'response'}
+
+  run: (callback=_.noop) =>
     debug 'running...'
     @meshblu = meshblu.createConnection @meshbluConfig
 
     @meshblu.once 'ready', =>
       @whoami (error, device) =>
+        throw error if error?
         @statusDevice = new StatusDevice { @meshbluConfig, @meshblu, device, @checkOnline }
         @statusDevice.start (error) =>
           throw error if error?
-          @boot device
+          @boot device, callback
 
     @meshblu.on 'error', (error) =>
       console.error 'meshblu error', error
@@ -62,7 +109,7 @@ class Runner
     @meshblu.on 'notReady', (error) =>
       console.error 'message not ready', error
 
-  _sendPong: ({ error, response })=>
+  _sendPong: ({ error, response }) =>
 
   whoami: (callback) =>
     debug 'whoami'

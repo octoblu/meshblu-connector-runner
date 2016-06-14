@@ -9,6 +9,9 @@ class StatusDevice
     @tag = "connector-#{@meshbluConfig.uuid}-status-device"
     @update = _.debounce @_update, 1000, { leading: true }
 
+  close: (callback) =>
+    @statusMeshblu.close callback
+
   _create: (callback) =>
     debug 'creating status device'
     { uuid } = @meshbluConfig
@@ -24,15 +27,6 @@ class StatusDevice
       return callback device.error if device.error?
       @connectorMeshblu.update { uuid, statusDevice: device.uuid }, (response={}) =>
         return callback response.error if response.error?
-        @device = device
-        @_connect callback
-
-  _generateToken: (uuid, callback) =>
-    debug 'generating token for status device'
-    @connectorMeshblu.revokeTokenByQuery { uuid, @tag }, (response={}) =>
-      return callback response.error if response.error?
-      @connectorMeshblu.generateAndStoreToken { uuid, @tag }, (device={}) =>
-        return callback device.error if device.error?
         @device = device
         @_connect callback
 
@@ -56,6 +50,15 @@ class StatusDevice
       debug 'on ping'
       @checkOnline (error, response) =>
         @update({ error, response })
+
+  _generateToken: (uuid, callback) =>
+    debug 'generating token for status device'
+    @connectorMeshblu.revokeTokenByQuery { uuid, @tag }, (response={}) =>
+      return callback response.error if response.error?
+      @connectorMeshblu.generateAndStoreToken { uuid, @tag }, (device={}) =>
+        return callback device.error if device.error?
+        @device = device
+        @_connect callback
 
   start: (callback) =>
     return @_generateToken @connectorDevice.statusDevice, callback if @connectorDevice.statusDevice?

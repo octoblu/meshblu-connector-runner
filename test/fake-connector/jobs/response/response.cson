@@ -1,0 +1,29 @@
+{
+  type: 'object'
+  required: ['metadata', 'data']
+  properties:
+    data:
+      type: 'array'
+      items:
+        type: 'object'
+        required: ['createdAt', 'repoName', 'type', 'username']
+        properties:
+          commitRef:
+            type: 'string'
+            description: 'The git reference for the event (ex: "refs/heads/master")'
+          commitSha:
+            type: 'string'
+            description: 'The SHA of the event (ex: "e5018700b23a926afb32581fa1a3cd6b7bb15584")'
+          createdAt:
+            type: 'string'
+            format: 'date-time'
+          description:
+            type: 'string'
+            description: 'The description of the event. Could be a commit message, repository description, etc.'
+          type:
+            type: 'string'
+            description: 'The event type. (ex: "CreateEvent", "PushEvent")'
+          username:
+            type: 'string'
+            description: 'The github username that performed the event. (ex: "sqrtofsaturn")'
+}
