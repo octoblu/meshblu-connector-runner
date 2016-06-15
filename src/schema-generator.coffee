@@ -21,17 +21,18 @@ class SchemaGenerator
     console.error error.stack
     process.exit 1
 
-  run: =>
+  run: (callback) =>
     connectorPath = @_getConnectorPath()
     schemas =
       version: '2.0.0'
+
     messageHandler = new MessageHandler {connectorPath}
 
     tasks =
-      formSchema: async.apply messageHandler.formSchema
-      messageSchema: async.apply messageHandler.messageSchema
-      responseSchema: async.apply messageHandler.responseSchema
-      # configSchema: async.apply messageHandler.configSchema
+      formSchema: messageHandler.formSchema
+      messageSchema: messageHandler.messageSchema
+      responseSchema: messageHandler.responseSchema
+      configSchema: messageHandler.configSchema
 
     async.parallel tasks, (error, {formSchema, messageSchema, responseSchema, configSchema}) =>
       return @panic error if error?
@@ -41,6 +42,7 @@ class SchemaGenerator
       schemas.response = responseSchema
       schemas.configure = configSchema
 
+      return callback null, {schemas} if callback?
       console.log stringify {schemas}, space: 2
 
   _getConnectorPath: =>

@@ -18,6 +18,9 @@ class MessageHandler
       return callback error if error?
       return callback null, _.pick(response, 'data', 'metadata')
 
+  configSchema: (callback) =>
+    callback null, @_configSchemaFromConnectorPath()
+
   formSchema: (callback) =>
     callback null, @_formSchemaFromJobs @jobs
 
@@ -26,6 +29,16 @@ class MessageHandler
 
   responseSchema: (callback) =>
     callback null, @_responseSchemaFromJobs @jobs
+
+  _configSchemaFromConnectorPath: =>
+    filenames = fs.readdirSync path.join(@connectorPath, 'configs')
+    configs = {}
+    _.each filenames, (filename) =>
+      filename = _.first filename.split /\./
+      key = _.upperFirst _.camelCase filename
+      file = path.join @connectorPath, 'configs', filename
+      configs[key] = require file
+    return configs
 
   _formSchemaFromJobs: (jobs) =>
     return {
