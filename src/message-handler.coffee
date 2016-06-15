@@ -7,6 +7,7 @@ NOT_FOUND_RESPONSE = {metadata: {code: 404, status: http.STATUS_CODES[404]}}
 
 class MessageHandler
   constructor: ({@connector, @connectorPath}) ->
+    throw new Error 'MessageHandler requires connectorPath' unless @connectorPath?
     @jobs = @_getJobs()
 
   onMessage: ({data, metadata}, callback) =>
