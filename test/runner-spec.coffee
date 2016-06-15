@@ -171,3 +171,27 @@ describe 'Runner', ->
 
         it 'should not call meshblu.message', ->
           expect(@meshblu.message).not.to.have.been.called
+
+      context 'job yields an error and has respondTo', ->
+        beforeEach ->
+          message =
+            metadata:
+              jobType: 'Fail'
+              respondTo:
+                node: 'some-node'
+            fromUuid: 'from-uuid'
+
+          @meshblu.emit 'message', message
+
+        it 'should call meshblu.message', ->
+          message =
+            devices: ["from-uuid"],
+            topic: "error"
+            metadata:
+              code: 500
+              error:
+                message: "something wrong"
+              to:
+                node: "some-node"
+
+          expect(@meshblu.message).to.have.been.calledWith message

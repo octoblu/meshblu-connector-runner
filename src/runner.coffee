@@ -37,7 +37,7 @@ class Runner
         {metadata, fromUuid} = message
         {respondTo} = metadata ? {}
         @messageHandler.onMessage message, (error, response) =>
-          @_handleMessageHandlerResponse {fromUuid, error, response}
+          @_handleMessageHandlerResponse {fromUuid, respondTo, error, response}
 
       @meshblu.on 'config', (device) =>
         debug 'on config'
@@ -76,7 +76,7 @@ class Runner
     return callback() unless @statusDevice?
     @statusDevice.close callback
 
-  _handleMessageHandlerResponse: ({fromUuid, error, response}) =>
+  _handleMessageHandlerResponse: ({fromUuid, respondTo, error, response}) =>
     devices = [fromUuid]
 
     if error?
