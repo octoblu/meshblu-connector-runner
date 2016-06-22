@@ -15,13 +15,13 @@ A component of [Meshblu Connectors](https://meshblu-connectors.readme.io). Click
 
 In the connector project, follow these steps:
 
-1 - Install the library
+1 - Install the runner inside the connector
 
 ```bash
 npm install --save meshblu-connector-runner
 ```
 
-2 - Add to the `start` script to your package.json
+2 - Add to the `start` script to your `package.json`
 
 ```js
 {
@@ -31,4 +31,16 @@ npm install --save meshblu-connector-runner
   }
   //...
 }
+```
+
+### Usage
+
+**Requirements:**
+* A meshblu configuration - see [meshblu-config](https://github.com/meshblu-config)
+* A compatible connector. Use the latest [generator](https://github.com/octoblu/generator-meshblu-connector) to build a connector.
+
+Running the connector:
+
+```bash
+npm start
 ```
