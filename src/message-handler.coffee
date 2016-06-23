@@ -1,5 +1,5 @@
 _    = require 'lodash'
-fs   = require 'fs'
+glob = require 'glob'
 path = require 'path'
 http = require 'http'
 
@@ -19,12 +19,15 @@ class MessageHandler
       return callback null, _.pick(response, 'data', 'metadata')
 
   _getJobs: =>
-    dirnames = fs.readdirSync path.join(@connectorPath, 'jobs')
+    dirnames = glob.sync path.join(@connectorPath, 'jobs', '/*/')
     jobs = {}
-    _.each dirnames, (dirname) =>
-      key = _.upperFirst _.camelCase dirname
-      dir = path.join @connectorPath, 'jobs', dirname
-      jobs[key] = require dir
+    _.each dirnames, (dir) =>
+      key = _.upperFirst _.camelCase path.basename dir
+      try
+        jobs[key] = require dir
+      catch error
+        console.error error.stack
+
     return jobs
 
 module.exports = MessageHandler
