@@ -11,7 +11,7 @@ class MessageHandler
     @jobs = @_getJobs()
 
   onMessage: ({data, metadata}, callback) =>
-    job = @jobs[metadata.jobType]
+    job = @jobs[metadata?.jobType]
     return callback null, NOT_FOUND_RESPONSE unless job?
 
     job.action {@connector}, {data, metadata}, (error, response) =>
