@@ -1,4 +1,5 @@
 _              = require 'lodash'
+path           = require 'path'
 async          = require 'async'
 meshblu        = require 'meshblu'
 StatusDevice   = require './status-device'
@@ -11,6 +12,8 @@ class Runner
     throw 'Runner requires connectorPath' unless @connectorPath?
     debug 'connectorPath', @connectorPath
     @Connector = require @connectorPath
+    connectorPackageJSONPath = path.join @connectorPath, 'package.json'
+    try @ConnectorPackageJSON = require connectorPackageJSONPath
     @checkOnline = _.throttle @_checkOnline, 1000, { leading: true, trailing: false }
 
   boot: (device, callback) =>
@@ -20,7 +23,11 @@ class Runner
     @connector.start device, (error) =>
       return callback error if error?
 
-      @messageHandler = new MessageHandler {@connector, @connectorPath}
+      @messageHandler = new MessageHandler {
+        @connector
+        @connectorPath
+        defaultJobType: @ConnectorPackageJSON?.connector?.defaultJobType
+      }
 
       @connector.on? 'message', (message) =>
         debug 'sending message', message

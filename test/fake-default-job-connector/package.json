@@ -1,0 +1,6 @@
+{
+  "name": "fake-default-job-connector",
+  "connector": {
+    "defaultJobType": "Default"
+  }
+}

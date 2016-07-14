@@ -6,12 +6,13 @@ http = require 'http'
 NOT_FOUND_RESPONSE = {metadata: {code: 404, status: http.STATUS_CODES[404]}}
 
 class MessageHandler
-  constructor: ({@connector, @connectorPath}) ->
+  constructor: ({@connector, @connectorPath, @defaultJobType}) ->
     throw new Error 'MessageHandler requires connectorPath' unless @connectorPath?
     @jobs = @_getJobs()
 
   onMessage: ({data, metadata}, callback) =>
     job = @jobs[metadata?.jobType]
+    job ?= @jobs[@defaultJobType] if @defaultJobType?
     return callback null, NOT_FOUND_RESPONSE unless job?
 
     job.action {@connector}, {data, metadata}, (error, response) =>

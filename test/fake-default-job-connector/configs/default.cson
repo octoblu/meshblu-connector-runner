@@ -1,0 +1,12 @@
+title: "Default Config"
+type: "object"
+properties:
+  options:
+    type: "object"
+    properties:
+      something:
+        title: "something Name"
+        type: "string"
+required: [
+  "options"
+]

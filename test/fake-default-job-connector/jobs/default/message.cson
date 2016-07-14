@@ -1,0 +1,15 @@
+{
+  type: 'object'
+  title: 'List Events by User'
+  'x-group-name': 'Events'
+  required: ['data']
+  properties:
+    data:
+      type: 'object'
+      required: ['username']
+      properties:
+        username:
+          type: 'string'
+          title: 'Username'
+          description: 'Github username or organization name'
+}
