@@ -195,3 +195,18 @@ describe 'Runner', ->
                 node: "some-node"
 
           expect(@meshblu.message).to.have.been.calledWith message
+
+      context 'message has a code', ->
+        beforeEach ->
+          message =
+            metadata:
+              code: 204
+              jobType: 'Fail'
+              respondTo:
+                node: 'some-node'
+            fromUuid: 'from-uuid'
+
+          @meshblu.emit 'message', message
+
+        it 'should not call meshblu.message', ->
+          expect(@meshblu.message).not.to.have.been.called

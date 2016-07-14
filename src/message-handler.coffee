@@ -11,6 +11,9 @@ class MessageHandler
     @jobs = @_getJobs()
 
   onMessage: ({data, metadata}, callback) =>
+    # drop responses on the floor
+    return callback() if metadata?.code?
+
     job = @jobs[metadata?.jobType]
     job ?= @jobs[@defaultJobType] if @defaultJobType?
     return callback null, NOT_FOUND_RESPONSE unless job?
