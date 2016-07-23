@@ -30,7 +30,8 @@ class StatusDevice
         @device = device
         @_connect callback
 
-  _connect: (callback) =>
+  _connect: (_callback) =>
+    callback = _.once _callback
     meshbluConfig = _.cloneDeep @meshbluConfig
     meshbluConfig.uuid = @device.uuid
     meshbluConfig.token = @device.token
@@ -39,11 +40,13 @@ class StatusDevice
       debug 'status device is ready'
       callback()
 
-    @statusMeshblu.once 'error', (error) =>
-      throw error if error?
+    @statusMeshblu.on 'error', (error) =>
+      console.error 'status device error', error
+      callback error
 
-    @statusMeshblu.once 'notReady', (error) =>
-      throw error if error?
+    @statusMeshblu.on 'notReady', (error) =>
+      console.error 'status device notReady', error
+      callback error
 
     @statusMeshblu.on 'message', (message={}) =>
       return if message.topic != 'ping'

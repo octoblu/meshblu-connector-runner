@@ -1,16 +1,28 @@
-_             = require 'lodash'
-fs            = require 'fs'
-path          = require 'path'
-Runner        = require './runner'
+_              = require 'lodash'
+fs             = require 'fs'
+path           = require 'path'
+Runner         = require './runner'
+OctobluRaven   = require 'octoblu-raven'
 {EventEmitter} = require 'events'
+
+SENTRY_DSN = process.env.SENTRY_DSN
+SENTRY_DSN ?= 'https://3b31e8586a854297a44da9770d84e7e0@app.getsentry.com/88235'
 
 class MeshbluConnectorRunner extends EventEmitter
   constructor: ({@connectorPath, @meshbluConfig}={}) ->
 
   run: =>
     throw new Error('Invalid state: ', @errors()) unless @isValid()
+    @setupRaven()
     runner = new Runner {@connectorPath, @meshbluConfig}
     runner.run()
+
+  setupRaven: =>
+    { version, name } = @getPackageJSON()
+    { uuid } = @meshbluConfig
+    octobluRaven = new OctobluRaven { name, release: "v#{version}", dsn: SENTRY_DSN }
+    octobluRaven.patchGlobal()
+    octobluRaven.setUserContext({ uuid })
 
   errors: =>
     errors = []
@@ -21,7 +33,11 @@ class MeshbluConnectorRunner extends EventEmitter
   isValid: =>
     _.isEmpty @errors()
 
-  isValidConnector: ()=>
+  getPackageJSON: =>
+    packageJSONPath = path.join @connectorPath, 'package.json'
+    return require packageJSONPath
+
+  isValidConnector: =>
     packageJSONPath = path.join @connectorPath, 'package.json'
     return fs.existsSync packageJSONPath
 

@@ -98,8 +98,9 @@ class Runner
       metadata.to = respondTo if respondTo?
       @meshblu.message {devices, data, metadata, topic: 'response'}
 
-  run: (callback=_.noop) =>
+  run: (_callback=_.noop) =>
     debug 'running...'
+    callback = _.once _callback
     @meshblu = meshblu.createConnection @meshbluConfig
 
     @meshblu.once 'ready', =>
@@ -112,11 +113,11 @@ class Runner
 
     @meshblu.on 'error', (error) =>
       console.error 'meshblu error', error
+      callback error
 
     @meshblu.on 'notReady', (error) =>
       console.error 'message not ready', error
-
-  _sendPong: ({ error, response }) =>
+      callback error
 
   whoami: (callback) =>
     debug 'whoami'
