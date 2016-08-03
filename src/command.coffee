@@ -43,6 +43,9 @@ class Command
         }
       ]
 
+    process.stdout.on 'error', (error) =>
+    process.stderr.on 'error', (error) =>
+
     meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
     return @_dieWithErrors meshbluConnectorRunner.errors() unless meshbluConnectorRunner.isValid()
     meshbluConnectorRunner.run()

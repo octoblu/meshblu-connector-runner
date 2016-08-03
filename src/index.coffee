@@ -19,10 +19,6 @@ class MeshbluConnectorRunner extends EventEmitter
     @setupRaven()
     runner = new Runner {@connectorPath, @meshbluConfig, @logger}
     runner.run()
-    process.stdout.on 'error', (error) =>
-      @logger.error error, 'stdout error'
-    process.stderr.on 'error', (error) =>
-      @logger.error error, 'stderr error'
 
   setupRaven: =>
     { version, name } = @getPackageJSON()
