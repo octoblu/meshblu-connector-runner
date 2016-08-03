@@ -7,9 +7,10 @@ MessageHandler = require './message-handler'
 debug          = require('debug')('meshblu-connector-runner:runner')
 
 class Runner
-  constructor: ({ @meshbluConfig, @connectorPath }={}) ->
+  constructor: ({ @meshbluConfig, @connectorPath, @logger }={}) ->
     throw 'Runner requires meshbluConfig' unless @meshbluConfig?
     throw 'Runner requires connectorPath' unless @connectorPath?
+    throw 'Runner requires logger' unless @logger?
     debug 'connectorPath', @connectorPath
     @Connector = require @connectorPath
     connectorPackageJSONPath = path.join @connectorPath, 'package.json'
@@ -26,6 +27,7 @@ class Runner
       @messageHandler = new MessageHandler {
         @connector
         @connectorPath
+        @logger
         defaultJobType: @ConnectorPackageJSON?.connector?.defaultJobType
       }
 
@@ -106,17 +108,19 @@ class Runner
     @meshblu.once 'ready', =>
       @whoami (error, device) =>
         throw error if error?
-        @statusDevice = new StatusDevice { @meshbluConfig, @meshblu, device, @checkOnline }
+        @statusDevice = new StatusDevice { @meshbluConfig, @meshblu, device, @checkOnline, @logger }
         @statusDevice.start (error) =>
           throw error if error?
           @boot device, callback
 
     @meshblu.on 'error', (error) =>
       console.error 'meshblu error', error
+      @logger.error error
       callback error
 
     @meshblu.on 'notReady', (error) =>
       console.error 'message not ready', error
+      @logger.info error
       callback error
 
   whoami: (callback) =>

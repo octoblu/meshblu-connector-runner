@@ -9,13 +9,20 @@ SENTRY_DSN = process.env.SENTRY_DSN
 SENTRY_DSN ?= 'https://3b31e8586a854297a44da9770d84e7e0@app.getsentry.com/88235'
 
 class MeshbluConnectorRunner extends EventEmitter
-  constructor: ({@connectorPath, @meshbluConfig}={}) ->
+  constructor: ({ @connectorPath, @meshbluConfig, @logger }={}) ->
+    throw 'MeshbluConnectorRunner requires connectorPath' unless @connectorPath?
+    throw 'MeshbluConnectorRunner requires meshbluConfig' unless @meshbluConfig?
+    throw 'MeshbluConnectorRunner requires logger' unless @logger?
 
   run: =>
     throw new Error('Invalid state: ', @errors()) unless @isValid()
     @setupRaven()
-    runner = new Runner {@connectorPath, @meshbluConfig}
+    runner = new Runner {@connectorPath, @meshbluConfig, @logger}
     runner.run()
+    process.stdout.on 'error', (error) =>
+      @logger.error error, 'stdout error'
+    process.stderr.on 'error', (error) =>
+      @logger.error error, 'stderr error'
 
   setupRaven: =>
     { version, name } = @getPackageJSON()

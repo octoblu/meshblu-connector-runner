@@ -3,7 +3,8 @@ meshblu = require 'meshblu'
 debug   = require('debug')('meshblu-connector-runner:status-device')
 
 class StatusDevice
-  constructor: ({ @meshbluConfig, meshblu, device, @checkOnline }) ->
+  constructor: ({ @meshbluConfig, meshblu, device, @checkOnline, @logger }) ->
+    throw 'StatusDevice requires logger' unless @logger?
     @connectorDevice = device
     @connectorMeshblu = meshblu
     @tag = "connector-#{@meshbluConfig.uuid}-status-device"
@@ -38,19 +39,23 @@ class StatusDevice
     @statusMeshblu = meshblu.createConnection meshbluConfig
     @statusMeshblu.once 'ready', =>
       debug 'status device is ready'
+      @logger.debug 'status device is ready'
       callback()
 
     @statusMeshblu.on 'error', (error) =>
       console.error 'status device error', error
+      @logger.error error, 'status device error'
       callback error
 
     @statusMeshblu.on 'notReady', (error) =>
       console.error 'status device notReady', error
+      @logger.info error, 'status device notReady'
       callback error
 
     @statusMeshblu.on 'message', (message={}) =>
       return if message.topic != 'ping'
       debug 'on ping'
+      @logger.debug message, 'on message'
       @checkOnline (error, response) =>
         @update({ error, response })
 

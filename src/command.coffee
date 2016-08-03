@@ -1,3 +1,4 @@
+bunyan        = require 'bunyan'
 dashdash      = require 'dashdash'
 _             = require 'lodash'
 path          = require 'path'
@@ -16,13 +17,37 @@ class Command
     connectorPath = @_getConnectorPath()
     meshbluConfig = new MeshbluConfig().toJSON()
 
-    meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig}
+    @logger = bunyan.createLogger
+      name: path.basename(connectorPath),
+      streams: [
+        {
+          level: 'info'
+          stream: path.join(connectorPath, 'log', 'connector.log')
+          period: '1d'
+          count: 3
+        },
+        {
+          level: 'warn'
+          stream: path.join(connectorPath, 'log', 'connector-warn.log')
+          period: '1d'
+          count: 3
+        },
+        {
+          level: 'error'
+          path: path.join(connectorPath, 'log', 'connector-error.log')
+          period: '1d'
+          count: 3
+        }
+      ]
+
+    meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
     return @_dieWithErrors meshbluConnectorRunner.errors() unless meshbluConnectorRunner.isValid()
     meshbluConnectorRunner.run()
 
   _dieWithErrors: (errors) =>
     console.error 'ERROR:'
     _.each errors, (error) =>
+      @logger?.fatal error
       console.error error.message
     process.exit 1
 

@@ -23,6 +23,11 @@ describe 'Runner', ->
     @meshblu.stop done
 
   beforeEach ->
+    logger =
+      info: =>
+      debug: =>
+      warn: =>
+
     meshbluConfig =
       uuid: 'some-uuid'
       token: 'a-token'
@@ -31,7 +36,7 @@ describe 'Runner', ->
 
     connectorPath = __dirname + '/fake-default-job-connector'
 
-    @sut = new Runner {meshbluConfig, connectorPath}
+    @sut = new Runner {meshbluConfig, connectorPath, logger}
 
   describe '->run', ->
     beforeEach (done) ->
