@@ -19,7 +19,7 @@ class Runner
 
   boot: (device, callback) =>
     debug 'booting up connector', uuid: device.uuid
-    @connector = new @Connector
+    @connector = new @Connector {@logger}
     @connector.start ?= (device, callback) => callback()
     @connector.start device, (error) =>
       return callback error if error?
