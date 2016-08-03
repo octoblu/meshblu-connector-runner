@@ -1,8 +1,9 @@
-bunyan        = require 'bunyan'
-dashdash      = require 'dashdash'
-_             = require 'lodash'
-path          = require 'path'
-MeshbluConfig = require 'meshblu-config'
+bunyan                 = require 'bunyan'
+dashdash               = require 'dashdash'
+_                      = require 'lodash'
+fs                     = require 'fs-extra'
+path                   = require 'path'
+MeshbluConfig          = require 'meshblu-config'
 MeshbluConnectorRunner = require './index'
 
 class Command
@@ -16,6 +17,8 @@ class Command
   run: =>
     connectorPath = @_getConnectorPath()
     meshbluConfig = new MeshbluConfig().toJSON()
+
+    fs.mkdirsSync path.join(connectorPath, 'log')
 
     @logger = bunyan.createLogger
       name: path.basename(connectorPath),
