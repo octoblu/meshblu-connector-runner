@@ -22,18 +22,21 @@ class Command
       streams: [
         {
           level: 'info'
-          stream: path.join(connectorPath, 'log', 'connector.log')
+          type: 'rotating-file'
+          path: path.join(connectorPath, 'log', 'connector.log')
           period: '1d'
           count: 3
         },
         {
           level: 'warn'
-          stream: path.join(connectorPath, 'log', 'connector-warn.log')
+          type: 'rotating-file'
+          path: path.join(connectorPath, 'log', 'connector-warn.log')
           period: '1d'
           count: 3
         },
         {
           level: 'error'
+          type: 'rotating-file'
           path: path.join(connectorPath, 'log', 'connector-error.log')
           period: '1d'
           count: 3
