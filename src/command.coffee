@@ -5,18 +5,21 @@ fs                     = require 'fs-extra'
 path                   = require 'path'
 MeshbluConfig          = require 'meshblu-config'
 MeshbluConnectorRunner = require './index'
+isRunning              = require 'is-running'
 
 class Command
   constructor: ({argv}) ->
     @args = dashdash.parse({argv: argv, options: []})
 
   panic: (error)=>
+    @logger?.fatal error
     console.error error.stack
     process.exit 1
 
   run: =>
     connectorPath = @_getConnectorPath()
     meshbluConfig = new MeshbluConfig().toJSON()
+    @parentPid = @_getParentPid()
 
     fs.mkdirsSync path.join(connectorPath, 'log')
 
@@ -48,6 +51,7 @@ class Command
 
     process.stdout.on 'error', (error) =>
     process.stderr.on 'error', (error) =>
+    setInterval(@_verifyParentPid, 30000) if @parentPid?
 
     meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
     return @_dieWithErrors meshbluConnectorRunner.errors() unless meshbluConnectorRunner.isValid()
@@ -64,5 +68,21 @@ class Command
     return process.cwd() unless _.last @args
     connectorPath = _.last @argv
     return path.resolve connectorPath
+
+  _getParentPid: =>
+    try
+      data = JSON.parse fs.readFileSync './update.json'
+    catch error
+      return # ignore error
+
+    return data?.pid
+
+  _verifyParentPid: =>
+    pid = @_getParentPid()
+    return unless pid?
+    if pid != @parentPid
+      return @panic new Error 'Parent process changed'
+    unless isRunning(pid)
+      return @panic new Error 'Parent process is no longer running'
 
 module.exports = Command

@@ -1,6 +1,6 @@
 {
   "name": "meshblu-connector-runner",
-  "version": "9.0.4",
+  "version": "9.1.0",
   "description": "Meshblu connector runner",
   "main": "index.js",
   "scripts": {
@@ -45,6 +45,7 @@
     "fs-cson": "^0.3.2",
     "fs-extra": "^0.30.0",
     "glob": "^7.0.5",
+    "is-running": "^2.0.0",
     "json-stable-stringify": "^1.0.1",
     "lodash": "^4.6.1",
     "meshblu": "^1.34.1",
