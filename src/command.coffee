@@ -75,7 +75,8 @@ class Command
     catch error
       return # ignore error
 
-    return data?.pid
+    return unless data?
+    return data.Pid ? data.pid
 
   _verifyParentPid: =>
     pid = @_getParentPid()
