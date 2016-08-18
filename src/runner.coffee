@@ -97,7 +97,9 @@ class Runner
 
     unless _.isEmpty response
       {data, metadata} = response
-      metadata.to = respondTo if respondTo?
+      if respondTo?
+        metadata ?= {}
+        metadata.to = respondTo
       @meshblu.message {devices, data, metadata, topic: 'response'}
 
   run: (_callback=_.noop) =>
