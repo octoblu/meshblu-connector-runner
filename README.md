@@ -1,11 +1,14 @@
 # meshblu-connector-runner
 
+[![Build Status](https://travis-ci.org/octoblu/meshblu-connector-runner.svg?branch=master)](https://travis-ci.org/octoblu/meshblu-connector-runner)
+[![Test Coverage](https://codecov.io/gh/octoblu/meshblu-connector-runner/branch/master/graph/badge.svg)](https://codecov.io/gh/octoblu/meshblu-connector-runner)
 [![Dependency status](http://img.shields.io/david/octoblu/meshblu-connector-runner.svg?style=flat)](https://david-dm.org/octoblu/meshblu-connector-runner)
 [![devDependency Status](http://img.shields.io/david/dev/octoblu/meshblu-connector-runner.svg?style=flat)](https://david-dm.org/octoblu/meshblu-connector-runner#info=devDependencies)
-[![Build Status](http://img.shields.io/travis/octoblu/meshblu-connector-runner.svg?style=flat&branch=master)](https://travis-ci.org/octoblu/meshblu-connector-runner)
 [![Slack Status](http://community-slack.octoblu.com/badge.svg)](http://community-slack.octoblu.com)
 
 [![NPM](https://nodei.co/npm/meshblu-connector-runner.svg?style=flat)](https://npmjs.org/package/meshblu-connector-runner)
+[![Dependency status](http://img.shields.io/david/octoblu/meshblu-connector-runner.svg?style=flat)](https://david-dm.org/octoblu/meshblu-connector-runner)
+
 
 A component of [Meshblu Connectors](https://meshblu-connectors.readme.io). Click [here](https://meshblu-connectors.readme.io/docs/connector-runner) to view the component documentation.
 
