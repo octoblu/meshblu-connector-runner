@@ -4,7 +4,10 @@
   "description": "Meshblu connector runner",
   "main": "index.js",
   "scripts": {
-    "test": "istanbul cover _mocha -- -R spec --require coffee-coverage/register-istanbul && mocha --reporter json > coverage/mocha.json"
+    "test": "mocha",
+    "coverage": "nyc npm test",
+    "mocha:json": "env NPM_ENV=test mocha --reporter json > coverage/mocha.json",
+    "test:watch": "mocha -w -R mocha-multi --reporter-options spec=-,mocha-osx-reporter=-"
   },
   "bin": {
     "meshblu-connector-runner": "./command.js"
@@ -26,10 +29,10 @@
   "homepage": "https://github.com/octoblu/meshblu-connector-runner#readme",
   "devDependencies": {
     "chai": "^3.5.0",
-    "coffee-coverage": "^1.0.1",
-    "istanbul": "^0.4.5",
     "mocha": "^2.4.5",
-    "mocha-istanbul": "^0.3.0",
+    "mocha-multi": "^0.9.1",
+    "mocha-osx-reporter": "^0.1.2",
+    "nyc": "^8.3.0",
     "portfinder": "^1.0.3",
     "server-destroy": "^1.0.1",
     "shmock": "^0.8.1",
@@ -51,5 +54,16 @@
     "meshblu": "^1.34.1",
     "meshblu-config": "^4.0.0",
     "octoblu-raven": "^3.1.0"
+  },
+  "nyc": {
+    "cache": true,
+    "reporter": [
+      "text-summary",
+      "lcov",
+      "json"
+    ],
+    "extension": [
+      ".coffee"
+    ]
   }
 }
