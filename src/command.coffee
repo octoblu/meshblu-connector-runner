@@ -29,7 +29,7 @@ class Command
         {
           level: 'info'
           type: 'rotating-file'
-          path: path.join(connectorPath, 'log', 'connector.log')
+          path: path.join(connectorPath, 'log', 'connector-info.log')
           period: '1d'
           count: 3
         },
