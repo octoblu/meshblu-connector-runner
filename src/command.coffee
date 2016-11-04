@@ -29,21 +29,21 @@ class Command
         {
           level: 'info'
           type: 'rotating-file'
-          path: path.join(connectorPath, 'log', 'connector-info.log')
+          path: path.join(connectorPath, 'log', 'meshblu-connector-runner-info.log')
           period: '1d'
           count: 3
         },
         {
           level: 'warn'
           type: 'rotating-file'
-          path: path.join(connectorPath, 'log', 'connector-warn.log')
+          path: path.join(connectorPath, 'log', 'meshblu-connector-runner-warn.log')
           period: '1d'
           count: 3
         },
         {
           level: 'error'
           type: 'rotating-file'
-          path: path.join(connectorPath, 'log', 'connector-error.log')
+          path: path.join(connectorPath, 'log', 'meshblu-connector-runner-error.log')
           period: '1d'
           count: 3
         }
