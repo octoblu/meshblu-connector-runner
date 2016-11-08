@@ -27,6 +27,7 @@ describe 'Runner', ->
       info: =>
       debug: =>
       warn: =>
+      error: =>
 
     meshbluConfig =
       uuid: 'some-uuid'
