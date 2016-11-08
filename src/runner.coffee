@@ -18,6 +18,7 @@ class Runner
     @checkOnline = _.throttle @_checkOnline, 1000, { leading: true, trailing: false }
 
   boot: (device, callback) =>
+    @_getStoppedState device
     debug 'booting up connector', uuid: device.uuid
     @connector = new @Connector {@logger}
     @connector.start ?= (device, callback) => callback()
@@ -33,24 +34,26 @@ class Runner
 
       @connector.on? 'message', (message) =>
         debug 'sending message', message
-        @meshblu.message message
+        @meshblu.message message unless @stopped
 
       @connector.on? 'update', (properties) =>
         debug 'sending update', properties
         {uuid, token} = @meshbluConfig
         properties = _.extend {uuid, token}, properties
-        @meshblu.update properties
+        @meshblu.update properties unless @stopped
 
       @meshblu.on 'message', (message) =>
         debug 'on message', message
         {metadata, fromUuid} = message
         {respondTo} = metadata ? {}
-        @messageHandler.onMessage message, (error, response) =>
-          @_handleMessageHandlerResponse {fromUuid, respondTo, error, response}
+        unless @stopped
+          @messageHandler.onMessage message, (error, response) =>
+            @_handleMessageHandlerResponse {fromUuid, respondTo, error, response}
 
       @meshblu.on 'config', (device) =>
         debug 'on config'
-        @connector.onConfig? device
+        @_handleStoppedState device
+        @connector.onConfig? device unless @stopped
 
       callback()
 
@@ -84,6 +87,16 @@ class Runner
     debug 'close statusDevice'
     return callback() unless @statusDevice?
     @statusDevice.close callback
+
+  _getStoppedState: (device) =>
+    @stopped = _.get device, 'connectorMetadata.stopped', false
+
+  _handleStoppedState: (device) =>
+    oldStopped = @stopped
+    @_getStoppedState device
+    if oldStopped != @stopped
+      @close =>
+        process.exit 0
 
   _handleMessageHandlerResponse: ({fromUuid, respondTo, error, response}) =>
     devices = [fromUuid]
