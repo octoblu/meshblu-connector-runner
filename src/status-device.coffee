@@ -49,7 +49,7 @@ class StatusDevice
 
     @statusMeshblu.on 'notReady', (error) =>
       console.error 'status device notReady', error
-      @logger.info error, 'status device notReady'
+      @logger.error error, 'status device notReady'
       callback error
 
     @statusMeshblu.on 'message', (message={}) =>

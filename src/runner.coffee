@@ -22,7 +22,15 @@ class Runner
     debug 'booting up connector', uuid: device.uuid
     @connector = new @Connector {@logger}
     @connector.start ?= (device, callback) => callback()
+    @connector?.on? 'error', (error) =>
+      return unless error?
+      debug 'sending error', error
+      @logger.error error, 'on error'
+      @statusDevice.update {error}
+
     @connector.start device, (error) =>
+      @logger.error error, 'connector start' if error?
+      @statusDevice.update {error} if error?
       return callback error if error?
 
       @messageHandler = new MessageHandler {
@@ -34,13 +42,17 @@ class Runner
 
       @connector.on? 'message', (message) =>
         debug 'sending message', message
-        @meshblu.message message unless @stopped
+        unless @stopped
+          @meshblu.message message, (error) =>
+            @logger.error error, 'on message' if error?
 
       @connector.on? 'update', (properties) =>
         debug 'sending update', properties
         {uuid, token} = @meshbluConfig
         properties = _.extend {uuid, token}, properties
-        @meshblu.update properties unless @stopped
+        unless @stopped
+          @meshblu.update properties, (error) =>
+            @logger.error error, 'on update' if error?
 
       @meshblu.on 'message', (message) =>
         debug 'on message', message
@@ -48,12 +60,16 @@ class Runner
         {respondTo} = metadata ? {}
         unless @stopped
           @messageHandler.onMessage message, (error, response) =>
+            @logger.error error, 'on message' if error?
             @_handleMessageHandlerResponse {fromUuid, respondTo, error, response}
 
       @meshblu.on 'config', (device) =>
         debug 'on config'
         @_handleStoppedState device
-        @connector.onConfig? device unless @stopped
+        unless @stopped
+          @connector.onConfig? device, (error) =>
+            @logger.error error, 'on config' if error?
+            @statusDevice.update {error} if error?
 
       callback()
 
@@ -135,7 +151,7 @@ class Runner
 
     @meshblu.on 'notReady', (error) =>
       console.error 'message not ready', error
-      @logger.info error
+      @logger.error error
       callback error
 
   whoami: (callback) =>
