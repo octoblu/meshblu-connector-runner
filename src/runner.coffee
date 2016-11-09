@@ -28,6 +28,21 @@ class Runner
       @logger.error error, 'on error'
       @statusDevice?.update {error}
 
+    @connector.on? 'message', (message) =>
+      debug 'sending message', message
+      unless @stopped
+        @meshblu.message message, (error) =>
+          @logger?.error error, 'on message' if error?
+
+    @connector.on? 'update', (properties) =>
+      debug 'sending update', properties
+      {uuid, token} = @meshbluConfig
+      properties = _.extend {uuid, token}, properties
+      unless @stopped
+        @meshblu.update properties, (error) =>
+          @logger?.error error, 'on update' if error?
+
+
     @connector.start device, (error) =>
       @logger?.error error, 'connector start' if error?
       @statusDevice?.update {error} if error?
@@ -39,20 +54,6 @@ class Runner
         @logger
         defaultJobType: @ConnectorPackageJSON?.connector?.defaultJobType
       }
-
-      @connector.on? 'message', (message) =>
-        debug 'sending message', message
-        unless @stopped
-          @meshblu.message message, (error) =>
-            @logger?.error error, 'on message' if error?
-
-      @connector.on? 'update', (properties) =>
-        debug 'sending update', properties
-        {uuid, token} = @meshbluConfig
-        properties = _.extend {uuid, token}, properties
-        unless @stopped
-          @meshblu.update properties, (error) =>
-            @logger?.error error, 'on update' if error?
 
       @meshblu.on 'message', (message) =>
         debug 'on message', message
