@@ -8,9 +8,10 @@ debug          = require('debug')('meshblu-connector-runner:runner')
 
 class Runner
   constructor: ({ @meshbluConfig, @connectorPath, @logger }={}) ->
-    throw 'Runner requires meshbluConfig' unless @meshbluConfig?
-    throw 'Runner requires connectorPath' unless @connectorPath?
-    throw 'Runner requires logger' unless @logger?
+    throw new Error 'Missing required parameter: meshbluConfig' unless @meshbluConfig?
+    throw new Error 'Missing required parameter: connectorPath' unless @connectorPath?
+    throw new Error 'Missing required parameter: logger' unless @logger?
+
     debug 'connectorPath', @connectorPath
     @Connector = require @connectorPath
     connectorPackageJSONPath = path.join @connectorPath, 'package.json'
@@ -18,7 +19,8 @@ class Runner
     @checkOnline = _.throttle @_checkOnline, 1000, { leading: true, trailing: false }
 
   boot: (device, callback) =>
-    @_getStoppedState device
+    @stopped = @_getStoppedState device
+
     debug 'booting up connector', uuid: device.uuid
     @connector = new @Connector {@logger}
     @connector.start ?= (device, callback) => callback()
@@ -29,24 +31,23 @@ class Runner
       @statusDevice?.update {error}
 
     @connector.on? 'message', (message) =>
+      return if @stopped
+
       debug 'sending message', message
-      unless @stopped
-        @meshblu.message message, (error) =>
-          @logger?.error error, 'on message' if error?
+      @meshblu.message message, (error) =>
+        @logger?.error error, 'on message' if error?
 
     @connector.on? 'update', (properties) =>
+      return if @stopped
+
       debug 'sending update', properties
       {uuid, token} = @meshbluConfig
       properties = _.extend {uuid, token}, properties
-      unless @stopped
-        @meshblu.update properties, (error) =>
-          @logger?.error error, 'on update' if error?
-
+      @meshblu.update properties, (error) =>
+        return @_onError error if error?
 
     @connector.start device, (error) =>
-      @logger?.error error, 'connector start' if error?
-      @statusDevice?.update {error} if error?
-      return callback error if error?
+      return @_onError error, callback if error?
 
       @messageHandler = new MessageHandler {
         @connector
@@ -56,21 +57,21 @@ class Runner
       }
 
       @meshblu.on 'message', (message) =>
-        debug 'on message', message
-        {metadata, fromUuid} = message
-        {respondTo} = metadata ? {}
-        unless @stopped
-          @messageHandler.onMessage message, (error, response) =>
-            @logger?.error error, 'on message' if error?
-            @_handleMessageHandlerResponse {fromUuid, respondTo, error, response}
+        return debug '@meshblu.on "message" ignored cause stopped' if @stopped
+
+        debug '@meshblu.on "message"'
+        fromUuid  = _.get message, 'fromUuid'
+        respondTo = _.get message, 'metadata.respondTo'
+        @messageHandler.onMessage message, (error, response) =>
+          @_onError error if error?
+          @_handleMessageHandlerResponse {fromUuid, respondTo, error, response}
 
       @meshblu.on 'config', (device) =>
-        debug 'on config'
-        @_handleStoppedState device
-        unless @stopped
-          @connector.onConfig? device, (error) =>
-            @logger?.error error, 'on config' if error?
-            @statusDevice?.update {error} if error?
+        debug '@meshblu.on "config"'
+        @_exitIfStoppedChanged device
+        return debug '@meshblu.on "config" ignored cause stopped' if @stopped
+        @connector.onConfig? device, (error) =>
+          return @_onError error if error?
 
       callback()
 
@@ -82,6 +83,7 @@ class Runner
 
   close: (callback=_.noop) =>
     debug 'closing'
+    @stopped = true
     tasks = [
       @_closeConnector
       @_closeMeshblu
@@ -106,14 +108,13 @@ class Runner
     @statusDevice.close callback
 
   _getStoppedState: (device) =>
-    @stopped = _.get device, 'connectorMetadata.stopped', false
+    _.get device, 'connectorMetadata.stopped', false
 
-  _handleStoppedState: (device) =>
-    oldStopped = @stopped
-    @_getStoppedState device
-    if oldStopped != @stopped
-      @close =>
-        process.exit 0
+  _exitIfStoppedChanged: (device) =>
+    stopped = @_getStoppedState device
+    return if stopped == @stopped
+    @close =>
+      process.exit 0
 
   _handleMessageHandlerResponse: ({fromUuid, respondTo, error, response}) =>
     devices = [fromUuid]
@@ -131,6 +132,12 @@ class Runner
         metadata ?= {}
         metadata.to = respondTo
       @meshblu.message {devices, data, metadata, topic: 'response'}
+
+  _onError: (error, callback) =>
+    @logger?.error error, 'connector start'
+    @statusDevice?.update {error}
+    return unless _.isFunction callback
+    return callback error
 
   run: (_callback=_.noop) =>
     debug 'running...'
