@@ -24,7 +24,7 @@ class Runner
     debug 'booting up connector', uuid: device.uuid
     @connector = new @Connector {@logger}
     @connector.start ?= (device, callback) => callback()
-    @connector?.on? 'error', (error) =>
+    @connector.on? 'error', (error) =>
       return unless error?
       debug 'sending error', error
       @logger.error error, 'on error'
