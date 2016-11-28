@@ -144,7 +144,7 @@ class Runner
     callback = _.once _callback
     @meshblu = meshblu.createConnection @meshbluConfig
     @meshblu.once 'ready', =>
-      @meshblu.update {uuid: @meshbluConfig.uuid, 'connectorMetadata.currentVersion': @ConnectorPackageJSON.version}
+      @meshblu.update uuid: @meshbluConfig.uuid, 'connectorMetadata.currentVersion': @ConnectorPackageJSON.version, =>
       @whoami (error, device) =>
         throw error if error?
         @statusDevice = new StatusDevice { @meshbluConfig, @meshblu, device, @checkOnline, @logger }

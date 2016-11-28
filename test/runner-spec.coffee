@@ -1,3 +1,7 @@
+{afterEach, beforeEach, context, describe, it} = global
+{expect} = require 'chai'
+sinon = require 'sinon'
+
 Runner = require '../src/runner'
 MockMeshbluSocketIO = require './mock-meshblu-socket-io'
 
@@ -51,6 +55,12 @@ describe 'Runner', ->
 
     it 'should create a statusDevice', ->
       expect(@sut.statusDevice).to.exist
+
+    it 'should update with the connector version', ->
+      expect(@updateHandler).to.have.been.calledWith {
+        uuid: 'some-uuid'
+        'connectorMetadata.currentVersion': '2.3.1'
+      }
 
     it 'should create a messageHandler', ->
       expect(@sut.statusDevice).to.exist
