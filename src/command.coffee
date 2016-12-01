@@ -66,7 +66,8 @@ class Command
 
   _verifyParentPid: =>
     pid = @_getParentPid()
-    return unless pid?
+    unless pid?
+      return @panic new Error 'update.json is not readable, assuming parent process is no longer running'
     if pid != @parentPid
       return @panic new Error 'Parent process changed'
     unless isRunning(pid)
