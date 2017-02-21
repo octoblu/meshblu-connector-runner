@@ -8,12 +8,15 @@ debug          = require('debug')('meshblu-connector-runner:runner')
 {EventEmitter} = require 'events'
 
 class Runner extends EventEmitter
-  constructor: ({ @meshbluConfig, @connectorPath, @logger }={}) ->
-    throw new Error 'Missing required parameter: meshbluConfig' unless @meshbluConfig?
+  constructor: ({meshbluConfig, @connectorPath, @logger }={}) ->
+    throw new Error 'Missing required parameter: meshbluConfig' unless meshbluConfig?
     throw new Error 'Missing required parameter: connectorPath' unless @connectorPath?
     throw new Error 'Missing required parameter: logger' unless @logger?
-
     debug 'connectorPath', @connectorPath
+
+    @meshbluConfig          = _.cloneDeep meshbluConfig
+    @meshbluConfig.options ?= reconnectionAttempts: 20
+
     @Connector = require @connectorPath
     connectorPackageJSONPath = path.join @connectorPath, 'package.json'
     try @ConnectorPackageJSON = require connectorPackageJSONPath
