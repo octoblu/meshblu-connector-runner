@@ -5,8 +5,9 @@ meshblu        = require 'meshblu'
 StatusDevice   = require './status-device'
 MessageHandler = require './message-handler'
 debug          = require('debug')('meshblu-connector-runner:runner')
+{EventEmitter} = require 'events'
 
-class Runner
+class Runner extends EventEmitter
   constructor: ({ @meshbluConfig, @connectorPath, @logger }={}) ->
     throw new Error 'Missing required parameter: meshbluConfig' unless @meshbluConfig?
     throw new Error 'Missing required parameter: connectorPath' unless @connectorPath?
@@ -143,28 +144,27 @@ class Runner
     debug 'running...'
     callback = _.once _callback
     @meshblu = meshblu.createConnection @meshbluConfig
+
+    @meshblu.on 'error', @_handleError
+    @meshblu.on 'notReady', @_handleError
+
     @meshblu.once 'ready', =>
       @meshblu.update uuid: @meshbluConfig.uuid, 'connectorMetadata.currentVersion': @ConnectorPackageJSON.version, =>
       @whoami (error, device) =>
-        throw error if error?
+        return @emit 'error', error if error?
         @statusDevice = new StatusDevice { @meshbluConfig, @meshblu, device, @checkOnline, @logger }
         @statusDevice.start (error) =>
-          throw error if error?
+          return @emit 'error', error if error?
           @boot device, callback
-
-    @meshblu.on 'error', (error) =>
-      console.error 'meshblu error', error
-      @logger.error error
-      callback error
-
-    @meshblu.on 'notReady', (error) =>
-      console.error 'message not ready', error
-      @logger.error error
-      callback error
 
   whoami: (callback) =>
     debug 'whoami'
     @meshblu.whoami {}, (device) =>
       callback null, device
+
+  _handleError: (error) =>
+    console.error 'meshblu error', error
+    @logger.error error
+    @emit 'error', error
 
 module.exports = Runner

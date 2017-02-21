@@ -41,6 +41,7 @@ class Command
 
     meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
     return @_dieWithErrors meshbluConnectorRunner.errors() unless meshbluConnectorRunner.isValid()
+    meshbluConnectorRunner.on 'error', (error) => @_dieWithErrors [error]
     meshbluConnectorRunner.run()
 
   _dieWithErrors: (errors) =>

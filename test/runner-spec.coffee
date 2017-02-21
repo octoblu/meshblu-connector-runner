@@ -107,6 +107,26 @@ describe 'Runner', ->
         it 'should call connector.onMessage', ->
           expect(@messageHandler.onMessage).to.have.been.calledWith foo: 'bar'
 
+      describe 'on error', ->
+        beforeEach (done) ->
+          @sut.on 'error', (@error) => done()
+          error = new Error "Something bad happened to Meshblu!"
+          @meshblu.emit 'error', error
+
+        it 'should emit the error', ->
+          expect(@error).to.exist
+
+
+      describe 'on notReady', ->
+        beforeEach (done) ->
+          @sut.on 'error', (@error) => done()
+          error = new Error "Meshblu wasn't ready. Or something."
+          @meshblu.emit 'notReady', error
+
+        it 'should emit the error', ->
+          expect(@error).to.exist
+
+
       describe 'on config', ->
         beforeEach ->
           config =
