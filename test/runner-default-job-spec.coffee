@@ -1,3 +1,6 @@
+{afterEach, beforeEach, context, describe, it} = global
+{expect} = require 'chai'
+sinon = require 'sinon'
 Runner = require '../src/runner'
 MockMeshbluSocketIO = require './mock-meshblu-socket-io'
 
@@ -32,7 +35,8 @@ describe 'Runner', ->
     meshbluConfig =
       uuid: 'some-uuid'
       token: 'a-token'
-      server: 'localhost'
+      protocol: 'http'
+      hostname: 'localhost'
       port: @meshblu.port
 
     connectorPath = __dirname + '/fake-default-job-connector'

@@ -1,6 +1,6 @@
-_       = require 'lodash'
-meshblu = require 'meshblu'
-debug   = require('debug')('meshblu-connector-runner:status-device')
+_               = require 'lodash'
+MeshbluSocketIO = require 'meshblu'
+debug           = require('debug')('meshblu-connector-runner:status-device')
 
 class StatusDevice
   constructor: ({ @meshbluConfig, meshblu, device, @checkOnline, @logger }) ->
@@ -36,11 +36,13 @@ class StatusDevice
     meshbluConfig = _.cloneDeep @meshbluConfig
     meshbluConfig.uuid = @device.uuid
     meshbluConfig.token = @device.token
-    @statusMeshblu = meshblu.createConnection meshbluConfig
+    @statusMeshblu = new MeshbluSocketIO meshbluConfig
     @statusMeshblu.once 'ready', =>
       debug 'status device is ready'
       @logger.debug 'status device is ready'
       callback()
+    @statusMeshblu.connect (error) =>
+      return callback error if error?
 
     @statusMeshblu.on 'error', (error) =>
       console.error 'status device error', error

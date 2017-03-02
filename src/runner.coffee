@@ -1,11 +1,11 @@
-_              = require 'lodash'
-path           = require 'path'
-async          = require 'async'
-meshblu        = require 'meshblu'
-StatusDevice   = require './status-device'
-MessageHandler = require './message-handler'
-debug          = require('debug')('meshblu-connector-runner:runner')
-{EventEmitter} = require 'events'
+_               = require 'lodash'
+path            = require 'path'
+async           = require 'async'
+MeshbluSocketIO = require 'meshblu'
+StatusDevice    = require './status-device'
+MessageHandler  = require './message-handler'
+debug           = require('debug')('meshblu-connector-runner:runner')
+{EventEmitter}  = require 'events'
 
 class Runner extends EventEmitter
   constructor: ({meshbluConfig, @connectorPath, @logger }={}) ->
@@ -146,7 +146,7 @@ class Runner extends EventEmitter
   run: (_callback=_.noop) =>
     debug 'running...'
     callback = _.once _callback
-    @meshblu = meshblu.createConnection @meshbluConfig
+    @meshblu = new MeshbluSocketIO @meshbluConfig
 
     @meshblu.on 'error', @_handleError
     @meshblu.on 'notReady', @_handleError
@@ -160,9 +160,12 @@ class Runner extends EventEmitter
           return @emit 'error', error if error?
           @boot device, callback
 
+    @meshblu.connect (error) =>
+      return @emit 'error', error if error?
+
   whoami: (callback) =>
     debug 'whoami'
-    @meshblu.whoami {}, (device) =>
+    @meshblu.whoami (device) =>
       callback null, device
 
   _handleError: (error) =>

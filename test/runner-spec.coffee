@@ -36,7 +36,8 @@ describe 'Runner', ->
     meshbluConfig =
       uuid: 'some-uuid'
       token: 'a-token'
-      server: 'localhost'
+      protocol: 'http'
+      hostname: 'localhost'
       port: @meshblu.port
 
     connectorPath = __dirname + '/fake-connector'
