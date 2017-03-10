@@ -18,6 +18,10 @@ class MeshbluConnectorRunner extends EventEmitter
     throw new Error('Invalid state: ', @errors()) unless @isValid()
     @setupRaven()
     runner = new Runner {@connectorPath, @meshbluConfig, @logger}
+    runner.on 'error', (error) =>
+      console.error "Runner error:", error.stack
+      console.log "Fatal error, exiting."
+      process.exit 1
     runner.run()
 
   setupRaven: =>
