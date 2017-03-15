@@ -1,6 +1,7 @@
 {afterEach, beforeEach, context, describe, it} = global
 {expect} = require 'chai'
 sinon = require 'sinon'
+_ = require 'lodash'
 
 Runner = require '../src/runner'
 MockMeshbluSocketIO = require './mock-meshblu-socket-io'
@@ -130,16 +131,19 @@ describe 'Runner', ->
         it 'should emit the error', ->
           expect(@error).to.exist
 
-
       describe 'on notReady', ->
         beforeEach (done) ->
+          done = _.once done
+          @sut.on 'notReady', (@notReady) => setTimeout done, 500
           @sut.on 'error', (@error) => done()
           error = new Error "Meshblu wasn't ready. Or something."
           @meshblu.emit 'notReady', error
 
-        it 'should emit the error', ->
-          expect(@error).to.exist
+        it 'should not emit as an error', ->
+          expect(@error).to.not.exist
 
+        it 'should emit a notReady', ->
+          expect(@notReady).to.exist
 
       describe 'on config', ->
         beforeEach ->

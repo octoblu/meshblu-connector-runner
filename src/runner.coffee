@@ -151,7 +151,11 @@ class Runner extends EventEmitter
     @meshblu = new MeshbluSocketIO @meshbluConfig
 
     @meshblu.on 'error', @_handleError
-    @meshblu.on 'notReady', @_handleError
+
+    @meshblu.on 'notReady', (error) =>
+      console.warn 'meshblu notReady', error
+      @logger.warn error
+      @emit 'notReady', error
 
     @meshblu.once 'ready', =>
       @meshblu.update uuid: @meshbluConfig.uuid, 'connectorMetadata.currentVersion': @ConnectorPackageJSON.version, =>
