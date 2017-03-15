@@ -41,8 +41,8 @@ class StatusDevice
       debug 'status device is ready'
       @logger.debug 'status device is ready'
       callback()
-    @statusMeshblu.connect (error) =>
-      return callback error if error?
+
+    @statusMeshblu.connect()
 
     @statusMeshblu.on 'error', (error) =>
       console.error 'status device error', error

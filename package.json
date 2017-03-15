@@ -1,6 +1,6 @@
 {
   "name": "meshblu-connector-runner",
-  "version": "10.4.0",
+  "version": "10.4.1",
   "description": "Meshblu connector runner",
   "main": "index.js",
   "scripts": {
@@ -36,23 +36,23 @@
     "portfinder": "^1.0.13",
     "server-destroy": "^1.0.1",
     "shmock": "^0.8.1",
-    "sinon": "^1.17.7",
+    "sinon": "^2.0.0",
     "sinon-chai": "^2.8.0",
     "socket.io": "^1.7.3"
   },
   "dependencies": {
     "async": "^2.1.5",
-    "bunyan": "^1.8.5",
+    "bunyan": "^1.8.8",
     "coffee-script": "^1.12.4",
     "dashdash": "^1.14.1",
     "fs-cson": "^0.3.2",
-    "fs-extra": "^2.0.0",
+    "fs-extra": "^2.1.0",
     "glob": "^7.0.5",
     "is-running": "^2.0.0",
     "json-stable-stringify": "^1.0.1",
     "lodash": "^4.17.4",
-    "meshblu": "^2.3.2",
-    "meshblu-config": "^6.4.3",
+    "meshblu": "^3.0.0",
+    "meshblu-config": "^7.0.0",
     "octoblu-raven": "^5.0.0"
   },
   "nyc": {

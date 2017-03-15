@@ -160,8 +160,7 @@ class Runner extends EventEmitter
           return @emit 'error', error if error?
           @boot device, callback
 
-    @meshblu.connect (error) =>
-      return @emit 'error', error if error?
+    @meshblu.connect()
 
   whoami: (callback) =>
     debug 'whoami'
