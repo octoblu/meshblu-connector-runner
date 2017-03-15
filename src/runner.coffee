@@ -32,7 +32,8 @@ class Runner extends EventEmitter
       return unless error?
       debug 'sending error', error
       @logger.error error, 'on error'
-      @statusDevice?.update {error}
+      @statusDevice?.update {error}, (updateError) =>
+        @logger.error updateError, 'error updating statusDevice with error'
 
     @connector.on? 'message', (message) =>
       return if @stopped
@@ -128,18 +129,19 @@ class Runner extends EventEmitter
         code: error.code ? 500
         error: message: error.message
       metadata.to = respondTo if respondTo?
-      return @meshblu.message {devices, metadata, topic: 'error'}
+      return @meshblu.message {devices, metadata, topic: 'error'}, =>
 
     unless _.isEmpty response
       {data, metadata} = response
       if respondTo?
         metadata ?= {}
         metadata.to = respondTo
-      @meshblu.message {devices, data, metadata, topic: 'response'}
+      @meshblu.message {devices, data, metadata, topic: 'response'}, =>
 
   _onError: (error, callback) =>
     @logger?.error error, 'connector start'
-    @statusDevice?.update {error}
+    @statusDevice?.update {error}, (updateError) =>
+      @logger?.error updateError, 'statusDevice.update'
     return unless _.isFunction callback
     return callback error
 

@@ -40,7 +40,6 @@ class Command
     process.exit 1
 
   run: =>
-
     process.stdout.on 'error', (error) => @logger.error error.message
     process.stderr.on 'error', (error) => @logger.error error.message
     process.on 'SIGINT', @stop

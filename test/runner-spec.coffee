@@ -18,6 +18,19 @@ describe 'Runner', ->
       @socket.on 'register', @registerHandler
       @socket.on 'update', @updateHandler
       @socket.on 'identity', @identityHandler
+      # @socket.on 'whoami', =>
+      #   console.log 'whoami'
+      #   @whoamiHandler.apply @socket, arguments
+      # @socket.on 'register', =>
+      #   console.log 'register'
+      #   @registerHandler.apply @socket, arguments
+      # @socket.on 'update', =>
+      #   console.log 'update', arguments
+      #   @updateHandler.apply @socket, arguments
+      # @socket.on 'identity', =>
+      #   console.log 'identity'
+      #   @identityHandler.apply @socket, arguments
+
       @socket.emit 'identify'
 
     @meshblu = new MockMeshbluSocketIO port: 0xd00d, onConnection: onConnection
@@ -51,7 +64,7 @@ describe 'Runner', ->
       @updateHandler.yields {}
       @sut.run done
 
-    afterEach (done) ->
+    afterEach 'sut.close', (done) ->
       @sut.close done
 
     it 'should create a statusDevice', ->

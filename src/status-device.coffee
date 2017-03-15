@@ -1,4 +1,3 @@
-async           = require 'async'
 _               = require 'lodash'
 MeshbluSocketIO = require 'meshblu'
 moment          = require 'moment'
@@ -115,19 +114,21 @@ class StatusDevice
     debug 'sending pong', message
     @statusMeshblu.message message
     { uuid } = @device
-    @statusMeshblu.update { uuid, lastPong: { response, error, date } }
+    @statusMeshblu.update { uuid, lastPong: { response, error, date } }, =>
 
   _updateOnlineUntil: =>
     { uuid } = @device
     onlineUntil = moment().add(EXPIRATION_TIMEOUT, 'ms')
 
-    @statusMeshblu.update { uuid, 'status.onlineUntil': onlineUntil }, (error) =>
-      @logger.error error, 'Error updating status.onlineUntil' if error?
+    @statusMeshblu.update { uuid, 'status.onlineUntil': onlineUntil }, =>
 
   _updateOnlineUntilToNow: (callback) =>
-    { uuid } = @device
-    onlineUntil = moment()
+    update = {
+      uuid: @device.uuid
+      'status.onlineUntil': moment()
+    }
 
-    @statusMeshblu.update { uuid, 'status.onlineUntil': onlineUntil }, () => callback()
+    @statusMeshblu.update update, =>
+      callback()
 
 module.exports = StatusDevice
