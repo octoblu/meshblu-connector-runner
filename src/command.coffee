@@ -11,18 +11,12 @@ class Command
   constructor: ({argv}) ->
     @args = dashdash.parse({argv: argv, options: []})
 
-  panic: (error)=>
-    @logger?.fatal error
-    console.error error.stack
-    process.exit 1
-
-  run: =>
     connectorPath = @_getConnectorPath()
     meshbluConfig = new MeshbluConfig().toJSON()
-    @parentPid = @_getParentPid()
 
     fs.mkdirsSync path.join(connectorPath, 'log')
 
+    @parentPid = @_getParentPid()
     @logger = bunyan.createLogger
       name: path.basename(connectorPath),
       streams: [
@@ -35,14 +29,30 @@ class Command
         }
       ]
 
-    process.stdout.on 'error', (error) =>
-    process.stderr.on 'error', (error) =>
-    setInterval(@_verifyParentPid, 30000) if @parentPid?
+    @meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
+    return @_dieWithErrors @meshbluConnectorRunner.errors() unless @meshbluConnectorRunner.isValid()
+    @meshbluConnectorRunner.on 'error', (error) => @_dieWithErrors [error]
 
-    meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
-    return @_dieWithErrors meshbluConnectorRunner.errors() unless meshbluConnectorRunner.isValid()
-    meshbluConnectorRunner.on 'error', (error) => @_dieWithErrors [error]
-    meshbluConnectorRunner.run()
+
+  panic: (error)=>
+    @logger?.fatal error
+    console.error error.stack
+    process.exit 1
+
+  run: =>
+
+    process.stdout.on 'error', (error) => @logger.error error.message
+    process.stderr.on 'error', (error) => @logger.error error.message
+    process.on 'SIGINT', @stop
+    process.on 'SIGTERM', @stop
+
+    setInterval(@_verifyParentPid, 30000) if @parentPid?
+    @meshbluConnectorRunner.run()
+
+  stop: =>
+    @meshbluConnectorRunner.stop (error) =>
+      return @panic error if error?
+      process.exit 0
 
   _dieWithErrors: (errors) =>
     console.error 'ERROR:'
@@ -59,7 +69,7 @@ class Command
   _getParentPid: =>
     try
       data = JSON.parse fs.readFileSync './update.json'
-    catch error
+    catch
       return # ignore error
 
     return unless data?
@@ -67,11 +77,16 @@ class Command
 
   _verifyParentPid: =>
     pid = @_getParentPid()
-    unless pid?
-      return @panic new Error 'update.json is not readable, assuming parent process is no longer running'
-    if pid != @parentPid
-      return @panic new Error 'Parent process changed'
-    unless isRunning(pid)
-      return @panic new Error 'Parent process is no longer running'
+    return if pid? && pid == @parentPid && isRunning(pid)
+
+    @meshbluConnectorRunner.stop (error) =>
+      @logger.error error, 'Error on meshbluConnectorRunner.stop' if error?
+
+      unless pid?
+        return @panic new Error 'update.json is not readable, assuming parent process is no longer running'
+      if pid != @parentPid
+        return @panic new Error 'Parent process changed'
+      unless isRunning(pid)
+        return @panic new Error 'Parent process is no longer running'
 
 module.exports = Command

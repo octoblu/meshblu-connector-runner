@@ -1,17 +1,31 @@
+async           = require 'async'
 _               = require 'lodash'
 MeshbluSocketIO = require 'meshblu'
+moment          = require 'moment'
 debug           = require('debug')('meshblu-connector-runner:status-device')
+
+UPDATE_INTERVAL = 60 * 1000
+EXPIRATION_TIMEOUT = 120 * 1000
 
 class StatusDevice
   constructor: ({ @meshbluConfig, meshblu, device, @checkOnline, @logger }) ->
-    throw 'StatusDevice requires logger' unless @logger?
+    throw new Error 'StatusDevice requires logger' unless @logger?
     @connectorDevice = device
     @connectorMeshblu = meshblu
     @tag = "connector-#{@meshbluConfig.uuid}-status-device"
     @update = _.debounce @_update, 1000, { leading: true }
 
   close: (callback) =>
-    @statusMeshblu.close callback
+    debug('close')
+    clearInterval @_updateOnlineUntilInterval if @_updateOnlineUntilInterval?
+
+    @_updateOnlineUntilToNow (error) =>
+      debug('_updateOnlineUntilToNow', {error})
+      return callback error if error?
+      @statusMeshblu.close (error) =>
+        debug('statusMeshblu.close', {error})
+        return callback error if error?
+        return callback()
 
   _create: (callback) =>
     debug 'creating status device'
@@ -23,10 +37,17 @@ class StatusDevice
       configureWhitelist: [ uuid, @connectorDevice.owner ]
       sendWhitelist: [ uuid, @connectorDevice.owner ]
       receiveWhitelist: [ uuid, @connectorDevice.owner ]
+      status: {}
 
     @connectorMeshblu.register device, (device={}) =>
       return callback device.error if device.error?
-      @connectorMeshblu.update { uuid, statusDevice: device.uuid }, (response={}) =>
+      update = {
+        uuid: uuid
+        statusDevice: device.uuid
+        status:
+          $ref: "meshbludevice://#{device.uuid}/#/status"
+      }
+      @connectorMeshblu.update update, (response={}) =>
         return callback response.error if response.error?
         @device = device
         @_connect callback
@@ -71,6 +92,13 @@ class StatusDevice
         @_connect callback
 
   start: (callback) =>
+    @_setup (error) =>
+      return callback error if error?
+      @_updateOnlineUntilInterval = setInterval @_updateOnlineUntil, UPDATE_INTERVAL
+      @_updateOnlineUntil()
+      callback()
+
+  _setup: (callback) =>
     return @_generateToken @connectorDevice.statusDevice, callback if @connectorDevice.statusDevice?
     @_create callback
 
@@ -88,5 +116,18 @@ class StatusDevice
     @statusMeshblu.message message
     { uuid } = @device
     @statusMeshblu.update { uuid, lastPong: { response, error, date } }
+
+  _updateOnlineUntil: =>
+    { uuid } = @device
+    onlineUntil = moment().add(EXPIRATION_TIMEOUT, 'ms')
+
+    @statusMeshblu.update { uuid, 'status.onlineUntil': onlineUntil }, (error) =>
+      @logger.error error, 'Error updating status.onlineUntil' if error?
+
+  _updateOnlineUntilToNow: (callback) =>
+    { uuid } = @device
+    onlineUntil = moment()
+
+    @statusMeshblu.update { uuid, 'status.onlineUntil': onlineUntil }, () => callback()
 
 module.exports = StatusDevice

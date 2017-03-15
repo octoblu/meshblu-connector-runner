@@ -10,19 +10,19 @@ SENTRY_DSN ?= 'https://3b31e8586a854297a44da9770d84e7e0@app.getsentry.com/88235'
 
 class MeshbluConnectorRunner extends EventEmitter
   constructor: ({ @connectorPath, @meshbluConfig, @logger }={}) ->
-    throw 'MeshbluConnectorRunner requires connectorPath' unless @connectorPath?
-    throw 'MeshbluConnectorRunner requires meshbluConfig' unless @meshbluConfig?
-    throw 'MeshbluConnectorRunner requires logger' unless @logger?
+    throw new Error 'MeshbluConnectorRunner requires connectorPath' unless @connectorPath?
+    throw new Error 'MeshbluConnectorRunner requires meshbluConfig' unless @meshbluConfig?
+    throw new Error 'MeshbluConnectorRunner requires logger' unless @logger?
 
   run: =>
     throw new Error('Invalid state: ', @errors()) unless @isValid()
     @setupRaven()
-    runner = new Runner {@connectorPath, @meshbluConfig, @logger}
-    runner.on 'error', (error) =>
+    @runner = new Runner {@connectorPath, @meshbluConfig, @logger}
+    @runner.on 'error', (error) =>
       console.error "Runner error:", error.stack
       console.log "Fatal error, exiting."
       process.exit 1
-    runner.run()
+    @runner.run()
 
   setupRaven: =>
     { version, name } = @getPackageJSON()
@@ -30,6 +30,10 @@ class MeshbluConnectorRunner extends EventEmitter
     octobluRaven = new OctobluRaven { name, release: "v#{version}", dsn: SENTRY_DSN }
     octobluRaven.patchGlobal()
     octobluRaven.setUserContext({ uuid })
+
+  stop: (callback) =>
+    return unless @runner?
+    @runner.close callback
 
   errors: =>
     errors = []
