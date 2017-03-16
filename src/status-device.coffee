@@ -97,9 +97,18 @@ class StatusDevice
       @_updateOnlineUntil()
       callback()
 
-  _setup: (callback) =>
+  _copyDiscoverWhitelist: (callback) =>
+    statusDeviceWhitelist = _.union @connectorDevice.discoverWhitelist, [@connectorDevice.uuid]
+    @statusMeshblu.update uuid: @device.uuid, discoverWhitelist: statusDeviceWhitelist, () => callback()
+
+  _findOrCreate: (callback) =>
     return @_generateToken @connectorDevice.statusDevice, callback if @connectorDevice.statusDevice?
     @_create callback
+
+  _setup: (callback) =>
+    @_findOrCreate (error) =>
+      return callback error if error?
+      @_copyDiscoverWhitelist callback
 
   _update: ({ response, error }) =>
     date = Date.now()
