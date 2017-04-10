@@ -1,3 +1,4 @@
+async           = require 'async'
 _               = require 'lodash'
 MeshbluSocketIO = require 'meshblu'
 moment          = require 'moment'
@@ -40,16 +41,8 @@ class StatusDevice
 
     @connectorMeshblu.register device, (device={}) =>
       return callback device.error if device.error?
-      update = {
-        uuid: uuid
-        statusDevice: device.uuid
-        status:
-          $ref: "meshbludevice://#{device.uuid}/#/status"
-      }
-      @connectorMeshblu.update update, (response={}) =>
-        return callback response.error if response.error?
-        @device = device
-        @_connect callback
+      @device = device
+      @_connect callback
 
   _connect: (_callback) =>
     callback = _.once _callback
@@ -106,9 +99,11 @@ class StatusDevice
     @_create callback
 
   _setup: (callback) =>
-    @_findOrCreate (error) =>
-      return callback error if error?
-      @_copyDiscoverWhitelist callback
+    async.series [
+      @_findOrCreate
+      @_updateStatusRef
+      @_copyDiscoverWhitelist
+    ], callback
 
   _update: ({ response, error }) =>
     date = Date.now()
@@ -139,5 +134,18 @@ class StatusDevice
 
     @statusMeshblu.update update, =>
       callback()
+
+  _updateStatusRef: (callback) =>
+    update = {
+      uuid:  @meshbluConfig.uuid
+      statusDevice: @device.uuid
+      status:
+        $ref: "meshbludevice://#{@device.uuid}/#/status"
+    }
+
+    @connectorMeshblu.update update, (response={}) =>
+      return callback response.error if response.error?
+      callback()
+
 
 module.exports = StatusDevice
