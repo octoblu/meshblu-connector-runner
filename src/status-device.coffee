@@ -122,7 +122,7 @@ class StatusDevice
 
   _updateOnlineUntil: =>
     { uuid } = @device
-    onlineUntil = moment().add(EXPIRATION_TIMEOUT, 'ms')
+    onlineUntil = moment().utc().add(EXPIRATION_TIMEOUT, 'ms')
 
     @statusMeshblu.update { uuid, 'status.onlineUntil': onlineUntil }, =>
 
