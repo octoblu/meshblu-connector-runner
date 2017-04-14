@@ -133,7 +133,7 @@ class StatusDevice
           ]
           $slice: -99
 
-    @statusMeshbluHttp.updateDangerously @meshbluConfig.uuid, update, (newError) =>
+    @statusMeshbluHttp.updateDangerously @device.uuid, update, (newError) =>
       console.error newError.stack if newError?
       return callback error if error?
       @update { response, error }, (error) =>
