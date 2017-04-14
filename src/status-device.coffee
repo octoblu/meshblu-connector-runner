@@ -123,18 +123,20 @@ class StatusDevice
     @statusMeshblu.update { uuid, lastPong: { response, error, date } }, callback
 
   logError: ({ response, error }, callback) =>
-    @update { response, error }, =>
-      update =
-        $push:
-          errors:
-            $each: [
-              date: moment.utc().format()
-              code: error.code ? 500
-              message: error.message
-            ]
-            $slice: -99
-      @statusMeshbluHttp.updateDangerously @device.uuid, update, (newError) =>
-        console.error newError.stack if newError?
+    update =
+      $push:
+        errors:
+          $each: [
+            date: moment.utc().format()
+            code: error.code ? 500
+            message: error.message
+          ]
+          $slice: -99
+
+    @statusMeshbluHttp.updateDangerously @meshbluConfig.uuid, update, (newError) =>
+      console.error newError.stack if newError?
+      return callback error if error?
+      @update { response, error }, (error) =>
         return callback error
 
   _updateOnlineUntil: =>

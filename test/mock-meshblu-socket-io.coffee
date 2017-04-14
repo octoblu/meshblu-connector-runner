@@ -10,7 +10,10 @@ class MockMeshbluSocketIO
     portfinder.getPort (error, @port) =>
       return callback error if error?
       @server = http.createServer()
-      @io = SocketIO @server
+      @server.on 'request', (request, response, next) =>
+        response.end('OK')
+      @io = SocketIO()
+      @io.attach @server
       @io.on 'connection', @onConnection
       @server.listen @port, callback
 

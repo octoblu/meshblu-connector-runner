@@ -38,6 +38,8 @@ describe 'Runner', ->
     @meshblu.start done
 
   afterEach 'socket.io', (done) ->
+    done = _.once done
+    setTimeout done, 500
     @meshblu.stop done
 
   beforeEach ->
@@ -179,12 +181,15 @@ describe 'Runner', ->
           expect(@meshblu.message).to.have.been.calledWith message
 
       context 'job yields error', ->
-        beforeEach ->
+        beforeEach (done) ->
           message =
             metadata:
               jobType: 'Fail'
             fromUuid: 'from-uuid'
 
+          @meshblu.message = (@message, callback) =>
+            callback?()
+            done()
           @meshblu.emit 'message', message
 
         it 'should call meshblu.message', ->
@@ -194,15 +199,18 @@ describe 'Runner', ->
             metadata:
               code: 500
               error: message: 'something wrong'
-          expect(@meshblu.message).to.have.been.calledWith message
+          expect(@message).to.deep.equal message
 
       context 'job yields response', ->
-        beforeEach ->
+        beforeEach (done) ->
           message =
             metadata:
               jobType: 'Response'
             fromUuid: 'from-uuid'
 
+          @meshblu.message = (@message, callback) =>
+            callback?()
+            _.defer done
           @meshblu.emit 'message', message
 
         it 'should call meshblu.message', ->
@@ -212,7 +220,7 @@ describe 'Runner', ->
             topic: 'response'
             metadata:
               code: 200
-          expect(@meshblu.message).to.have.been.calledWith message
+          expect(@message).to.deep.equal message
 
       context 'job yields no response', ->
         beforeEach ->
