@@ -14,7 +14,7 @@ class StatusDevice
     @connectorDevice = device
     @connectorMeshblu = meshblu
     @tag = "connector-#{@meshbluConfig.uuid}-status-device"
-    @update = _.debounce @_update, 1000, { leading: true }
+    @update = _.throttle @_update, 1000, { leading: true, trailing: false }
 
   close: (callback) =>
     debug('close')
@@ -107,7 +107,7 @@ class StatusDevice
       @_copyDiscoverWhitelist
     ], callback
 
-  _update: ({ response, error }) =>
+  _update: ({ response, error }, callback=_.noop) =>
     date = Date.now()
     message = {
       devices: ['*']
@@ -120,7 +120,7 @@ class StatusDevice
     debug 'sending pong', message
     @statusMeshblu.message message
     { uuid } = @device
-    @statusMeshblu.update { uuid, lastPong: { response, error, date } }, =>
+    @statusMeshblu.update { uuid, lastPong: { response, error, date } }, callback
 
   logError: ({ response, error }, callback) =>
     @update { response, error }, =>
