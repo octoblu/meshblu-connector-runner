@@ -32,7 +32,7 @@ class Runner extends EventEmitter
       return unless error?
       debug 'sending error', error
       @logger.error error, 'on error'
-      @statusDevice?.update {error}, (updateError) =>
+      @statusDevice?.logError {error}, (updateError) =>
         @logger.error updateError, 'error updating statusDevice with error'
 
     @connector.on? 'message', (message) =>
@@ -140,7 +140,7 @@ class Runner extends EventEmitter
 
   _onError: (error, callback) =>
     @logger?.error error, 'connector start'
-    @statusDevice?.update {error}, (updateError) =>
+    @statusDevice?.logError {error}, (updateError) =>
       @logger?.error updateError, 'statusDevice.update'
     return unless _.isFunction callback
     return callback error

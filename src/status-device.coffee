@@ -1,6 +1,7 @@
 async           = require 'async'
 _               = require 'lodash'
 MeshbluSocketIO = require 'meshblu'
+MeshbluHttp     = require 'meshblu-http'
 moment          = require 'moment'
 debug           = require('debug')('meshblu-connector-runner:status-device')
 
@@ -50,6 +51,7 @@ class StatusDevice
     meshbluConfig.uuid = @device.uuid
     meshbluConfig.token = @device.token
     @statusMeshblu = new MeshbluSocketIO meshbluConfig
+    @statusMeshbluHttp = new MeshbluHttp meshbluConfig
     @statusMeshblu.once 'ready', =>
       debug 'status device is ready'
       @logger.debug 'status device is ready'
@@ -119,6 +121,21 @@ class StatusDevice
     @statusMeshblu.message message
     { uuid } = @device
     @statusMeshblu.update { uuid, lastPong: { response, error, date } }, =>
+
+  logError: ({ response, error }, callback) =>
+    @update { response, error }, =>
+      update =
+        $push:
+          errors:
+            $each: [
+              date: moment.utc().format()
+              code: error.code ? 500
+              message: error.message
+            ]
+            $slice: -99
+      @statusMeshbluHttp.updateDangerously @device.uuid, update, (newError) =>
+        console.error newError.stack if newError?
+        return callback error
 
   _updateOnlineUntil: =>
     { uuid } = @device

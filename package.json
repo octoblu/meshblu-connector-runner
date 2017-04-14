@@ -1,6 +1,6 @@
 {
   "name": "meshblu-connector-runner",
-  "version": "10.7.0",
+  "version": "10.8.0",
   "description": "Meshblu connector runner",
   "main": "index.js",
   "scripts": {
@@ -52,7 +52,8 @@
     "json-stable-stringify": "^1.0.1",
     "lodash": "^4.17.4",
     "meshblu": "^3.0.0",
-    "meshblu-config": "^7.0.0"
+    "meshblu-config": "^7.0.0",
+    "meshblu-http": "^9.8.0"
   },
   "nyc": {
     "cache": true,
