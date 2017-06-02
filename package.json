@@ -1,6 +1,6 @@
 {
   "name": "meshblu-connector-runner",
-  "version": "11.0.3",
+  "version": "11.0.4",
   "description": "Meshblu connector runner",
   "main": "dist/index.js",
   "scripts": {
@@ -54,7 +54,8 @@
     "meshblu": "^3.0.5",
     "meshblu-config": "^8.0.1",
     "meshblu-http": "^10.0.4",
-    "moment": "^2.18.1"
+    "moment": "^2.18.1",
+    "path-exists": "^3.0.0"
   },
   "optionalDependencies": {
     "bunyan": "^1.8.10"
