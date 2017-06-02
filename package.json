@@ -1,16 +1,17 @@
 {
   "name": "meshblu-connector-runner",
-  "version": "10.8.5",
+  "version": "11.0.0",
   "description": "Meshblu connector runner",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "coffee --compile --output dist/ src/*.coffee",
     "test": "mocha",
     "coverage": "nyc npm test",
     "mocha:json": "env NPM_ENV=test mocha --reporter json > coverage/mocha.json",
     "test:watch": "mocha -w -R mocha-multi --reporter-options spec=-,mocha-osx-reporter=-"
   },
   "bin": {
-    "meshblu-connector-runner": "./command.js"
+    "meshblu-connector-runner": "./dist-command.js"
   },
   "repository": {
     "type": "git",
@@ -28,32 +29,35 @@
   },
   "homepage": "https://github.com/octoblu/meshblu-connector-runner#readme",
   "devDependencies": {
-    "chai": "^3.5.0",
-    "mocha": "^3.2.0",
-    "mocha-multi": "^0.10.0",
+    "chai": "^4.0.1",
+    "coffee-script": "^1.12.6",
+    "fs-cson": "^0.3.2",
+    "mocha": "^3.4.2",
+    "mocha-multi": "^0.11.0",
     "mocha-osx-reporter": "^0.1.2",
-    "nyc": "^10.2.0",
+    "nyc": "^11.0.1",
     "portfinder": "^1.0.13",
     "server-destroy": "^1.0.1",
     "shmock": "^0.8.1",
-    "sinon": "^2.1.0",
-    "sinon-chai": "^2.9.0",
-    "socket.io": "^1.7.3"
+    "sinon": "^2.3.2",
+    "sinon-chai": "^2.10.0",
+    "socket.io": "^2.0.2"
   },
   "dependencies": {
-    "async": "^2.3.0",
-    "bunyan": "^1.8.9",
-    "coffee-script": "^1.12.4",
+    "async": "^2.4.1",
     "dashdash": "^1.14.1",
-    "fs-cson": "^0.3.2",
-    "fs-extra": "^2.1.2",
-    "glob": "^7.0.5",
+    "fs-extra": "^3.0.1",
+    "glob": "^7.1.2",
     "is-running": "^2.0.0",
     "json-stable-stringify": "^1.0.1",
     "lodash": "^4.17.4",
-    "meshblu": "^3.0.1",
-    "meshblu-config": "^7.0.0",
-    "meshblu-http": "^9.8.0"
+    "meshblu": "^3.0.4",
+    "meshblu-config": "^8.0.0",
+    "meshblu-http": "^10.0.4",
+    "moment": "^2.18.1"
+  },
+  "optionalDependencies": {
+    "bunyan": "^1.8.10"
   },
   "nyc": {
     "cache": true,

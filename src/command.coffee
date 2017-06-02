@@ -1,11 +1,11 @@
-bunyan                 = require 'bunyan'
 dashdash               = require 'dashdash'
 _                      = require 'lodash'
 fs                     = require 'fs-extra'
 path                   = require 'path'
 MeshbluConfig          = require 'meshblu-config'
-MeshbluConnectorRunner = require './index'
 isRunning              = require 'is-running'
+MeshbluConnectorRunner = require './index'
+Logger                 = require './logger'
 
 class Command
   constructor: ({argv}) ->
@@ -17,17 +17,7 @@ class Command
     fs.mkdirsSync path.join(connectorPath, 'log')
 
     @parentPid = @_getParentPid()
-    @logger = bunyan.createLogger
-      name: path.basename(connectorPath),
-      streams: [
-        {
-          level: 'error'
-          type: 'rotating-file'
-          path: path.join(connectorPath, 'log', 'meshblu-connector-runner-error.log')
-          period: '1d'
-          count: 3
-        }
-      ]
+    @logger = new Logger { connectorPath }
 
     @meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
     return @_dieWithErrors @meshbluConnectorRunner.errors() unless @meshbluConnectorRunner.isValid()

@@ -1,4 +1,4 @@
-Job = require './job.coffee'
+Job = require './job'
 
 module.exports = (options, message, callback) =>
   job = new Job options

@@ -34,5 +34,3 @@ node_modules
 deploy
 meshblu.json
 .nyc_output
-
-dist
