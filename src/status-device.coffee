@@ -93,7 +93,8 @@ class StatusDevice
       callback()
 
   _copyDiscoverWhitelist: (callback) =>
-    statusDeviceWhitelist = _.union @connectorDevice.discoverWhitelist, [@connectorDevice.uuid]
+    newDiscoverWhitelist = _.map _.get(@connectorDevice,  'meshblu.whitelists.discover.view', []), 'uuid'
+    statusDeviceWhitelist = _.union @connectorDevice.discoverWhitelist, newDiscoverWhitelist, [@connectorDevice.uuid]
     @statusMeshblu.update uuid: @device.uuid, discoverWhitelist: statusDeviceWhitelist, () => callback()
 
   _findOrCreate: (callback) =>
