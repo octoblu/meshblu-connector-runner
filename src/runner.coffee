@@ -140,12 +140,12 @@ class Runner extends EventEmitter
       @meshblu.message {devices, data, metadata, topic: 'response'}, =>
 
   _handleNotReady: (error) =>
-    @emit 'notReady', error
     @failedConnectionAttempts++ if error?.status == 504
-    return if @failedConnectionAttempts < 20
-    @close =>
-      console.error('Exceeded number of reconnect attempts for meshblu')
-      process.exit 1
+    if @failedConnectionAttempts < 20
+      return @emit 'notReady', error
+    else
+      error = new Error 'Exceeded number of reconnect attempts for meshblu'
+      @emit 'error', error
 
   _onError: (error, callback) =>
     @logger?.error error, 'connector start'
