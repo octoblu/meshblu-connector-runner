@@ -16,6 +16,7 @@ class Runner extends EventEmitter
 
     @meshbluConfig          = _.cloneDeep meshbluConfig
     @meshbluConfig.options ?= reconnectionAttempts: 20
+    @numberOfAttempts       = 0
 
     @Connector = require @connectorPath
     connectorPackageJSONPath = path.join @connectorPath, 'package.json'
@@ -138,6 +139,15 @@ class Runner extends EventEmitter
         metadata.to = respondTo
       @meshblu.message {devices, data, metadata, topic: 'response'}, =>
 
+  _handleNotReady: (error) =>
+    @emit 'notReady', error
+    @numberOfAttempts++
+
+    { status } = error
+    if status == 504 and @numberOfAttempts == 20
+      @close =>
+        process.exit 0
+
   _onError: (error, callback) =>
     @logger?.error error, 'connector start'
     @statusDevice?.logError {error}, (updateError) =>
@@ -155,7 +165,7 @@ class Runner extends EventEmitter
     @meshblu.on 'notReady', (error) =>
       console.warn 'meshblu notReady', error
       @logger.warn error
-      @emit 'notReady', error
+      @_handleNotReady error
 
     @meshblu.once 'ready', =>
       @meshblu.update uuid: @meshbluConfig.uuid, 'connectorMetadata.currentVersion': @ConnectorPackageJSON.version, =>
