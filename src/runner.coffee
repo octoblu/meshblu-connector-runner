@@ -14,9 +14,9 @@ class Runner extends EventEmitter
     throw new Error 'Missing required parameter: logger' unless @logger?
     debug 'connectorPath', @connectorPath
 
-    @meshbluConfig          = _.cloneDeep meshbluConfig
-    @meshbluConfig.options ?= reconnectionAttempts: 20
-    @numberOfAttempts       = 0
+    @meshbluConfig            = _.cloneDeep meshbluConfig
+    @meshbluConfig.options   ?= reconnectionAttempts: 20
+    @failedConnectionAttempts = 0
 
     @Connector = require @connectorPath
     connectorPackageJSONPath = path.join @connectorPath, 'package.json'
@@ -141,12 +141,11 @@ class Runner extends EventEmitter
 
   _handleNotReady: (error) =>
     @emit 'notReady', error
-    @numberOfAttempts++
-
-    { status } = error
-    if status == 504 and @numberOfAttempts == 20
-      @close =>
-        process.exit 0
+    @failedConnectionAttempts++ if error?.status == 504
+    return if @failedConnectionAttempts < 20
+    @close =>
+      console.error('Exceeded number of reconnect attempts for meshblu')
+      process.exit 1
 
   _onError: (error, callback) =>
     @logger?.error error, 'connector start'
@@ -168,6 +167,7 @@ class Runner extends EventEmitter
       @_handleNotReady error
 
     @meshblu.once 'ready', =>
+      @failedConnectionAttempts = 0
       @meshblu.update uuid: @meshbluConfig.uuid, 'connectorMetadata.currentVersion': @ConnectorPackageJSON.version, =>
       @whoami (error, device) =>
         return @emit 'error', error if error?
