@@ -1,12 +1,15 @@
 path = require 'path'
+debug = require('debug')('meshblu-connector-runner')
+
 class Logger
-  constructor: ({ @connectorPath }) ->
+  constructor: ({ @connectorPath, @logType }) ->
+    return @_createConsoleLogger() if @logType == 'console'
     return @_createLogger()
 
   _createConsoleLogger: =>
      return {
       trace: console.info,
-      debug: console.info,
+      debug: debug,
       info: console.log,
       warn: console.log,
       error: console.error,

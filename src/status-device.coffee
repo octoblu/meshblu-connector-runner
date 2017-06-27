@@ -3,7 +3,6 @@ _               = require 'lodash'
 MeshbluSocketIO = require 'meshblu'
 MeshbluHttp     = require 'meshblu-http'
 moment          = require 'moment'
-debug           = require('debug')('meshblu-connector-runner:status-device')
 
 UPDATE_INTERVAL = 60 * 1000
 EXPIRATION_TIMEOUT = 120 * 1000
@@ -17,19 +16,15 @@ class StatusDevice
     @update = _.throttle @_update, 1000, { leading: true, trailing: false }
 
   close: (callback) =>
-    debug('close')
     clearInterval @_updateOnlineUntilInterval if @_updateOnlineUntilInterval?
 
     @_updateOnlineUntilToNow (error) =>
-      debug('_updateOnlineUntilToNow', {error})
       return callback error if error?
       @statusMeshblu.close (error) =>
-        debug('statusMeshblu.close', {error})
         return callback error if error?
         return callback()
 
   _create: (callback) =>
-    debug 'creating status device'
     { uuid } = @meshbluConfig
     device =
       type: 'connector-status-device'
@@ -53,31 +48,26 @@ class StatusDevice
     @statusMeshblu = new MeshbluSocketIO meshbluConfig
     @statusMeshbluHttp = new MeshbluHttp meshbluConfig
     @statusMeshblu.once 'ready', =>
-      debug 'status device is ready'
       @logger.debug 'status device is ready'
       callback()
 
     @statusMeshblu.connect()
 
     @statusMeshblu.on 'error', (error) =>
-      console.error 'status device error', error
       @logger.error error, 'status device error'
       callback error
 
     @statusMeshblu.on 'notReady', (error) =>
-      console.error 'status device notReady', error
       @logger.error error, 'status device notReady'
       callback error
 
     @statusMeshblu.on 'message', (message={}) =>
       return if message.topic != 'ping'
-      debug 'on ping'
       @logger.debug message, 'on message'
       @checkOnline (error, response) =>
         @update({ error, response })
 
   _generateToken: (uuid, callback) =>
-    debug 'generating token for status device'
     @connectorMeshblu.revokeTokenByQuery { uuid, @tag }, (response={}) =>
       return callback response.error if response.error?
       @connectorMeshblu.generateAndStoreToken { uuid, @tag }, (device={}) =>
@@ -108,7 +98,7 @@ class StatusDevice
       @_copyDiscoverWhitelist
     ], callback
 
-  _update: ({ response, error }, callback=_.noop) =>
+  _update: ({ response, error }, callback=->) =>
     date = Date.now()
     message = {
       devices: ['*']
@@ -118,12 +108,15 @@ class StatusDevice
       error
     }
 
-    debug 'sending pong', message
     @statusMeshblu.message message
     { uuid } = @device
-    @statusMeshblu.update { uuid, lastPong: { response, error, date } }, callback
+    @statusMeshblu.update { uuid, lastPong: { response, error, date } }, (error) =>
+      return callback null if error?.uuid? and error?.status < 399
+      return callback error if error?
+      callback null
 
-  logError: ({ response, error }, callback) =>
+  logError: ({ response, error }, callback=->) =>
+    @logger.debug 'log error on status device', { error, response }
     update =
       $push:
         errors:
@@ -135,10 +128,9 @@ class StatusDevice
           $slice: -99
 
     @statusMeshbluHttp.updateDangerously @device.uuid, update, (newError) =>
-      console.error newError.stack if newError?
-      return callback error if error?
-      @update { response, error }, (error) =>
-        return callback error
+      @logger.error newError.stack if newError?
+      @update { response, error }, (updateError) =>
+        @logger.error 'error updating status device', updateError if updateError?
 
   _updateOnlineUntil: =>
     { uuid } = @device
@@ -166,6 +158,5 @@ class StatusDevice
     @connectorMeshblu.update update, (response={}) =>
       return callback response.error if response.error?
       callback()
-
 
 module.exports = StatusDevice

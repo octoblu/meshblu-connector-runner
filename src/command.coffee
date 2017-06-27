@@ -1,5 +1,5 @@
-dashdash               = require 'dashdash'
 _                      = require 'lodash'
+dashdash               = require 'dashdash'
 fs                     = require 'fs-extra'
 path                   = require 'path'
 MeshbluConfig          = require 'meshblu-config'
@@ -22,7 +22,6 @@ class Command
     @meshbluConnectorRunner = new MeshbluConnectorRunner {connectorPath, meshbluConfig, @logger}
     return @_dieWithErrors @meshbluConnectorRunner.errors() unless @meshbluConnectorRunner.isValid()
     @meshbluConnectorRunner.on 'error', (error) => @_dieWithErrors [error]
-
 
   panic: (error)=>
     @logger?.fatal error

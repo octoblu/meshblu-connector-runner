@@ -3,12 +3,13 @@ fs             = require 'fs'
 path           = require 'path'
 Runner         = require './runner'
 {EventEmitter} = require 'events'
+Logger         = require './logger'
 
 class MeshbluConnectorRunner extends EventEmitter
-  constructor: ({ @connectorPath, @meshbluConfig, @logger }={}) ->
+  constructor: ({ @connectorPath, @meshbluConfig, @logger, logType }={}) ->
     throw new Error 'MeshbluConnectorRunner requires connectorPath' unless @connectorPath?
     throw new Error 'MeshbluConnectorRunner requires meshbluConfig' unless @meshbluConfig?
-    throw new Error 'MeshbluConnectorRunner requires logger' unless @logger?
+    @logger ?= new Logger { @connectorPath, logType }
 
   run: =>
     throw new Error('Invalid state: ', @errors()) unless @isValid()

@@ -4,15 +4,14 @@ async           = require 'async'
 MeshbluSocketIO = require 'meshblu'
 StatusDevice    = require './status-device'
 MessageHandler  = require './message-handler'
-debug           = require('debug')('meshblu-connector-runner:runner')
 {EventEmitter}  = require 'events'
 
 class Runner extends EventEmitter
-  constructor: ({meshbluConfig, @connectorPath, @logger }={}) ->
+  constructor: ({ meshbluConfig, @connectorPath, @logger }={}) ->
     throw new Error 'Missing required parameter: meshbluConfig' unless meshbluConfig?
     throw new Error 'Missing required parameter: connectorPath' unless @connectorPath?
-    throw new Error 'Missing required parameter: logger' unless @logger?
-    debug 'connectorPath', @connectorPath
+    throw new Error 'Missing required parameter: logger' unless @logger
+    @logger.debug 'connectorPath', @connectorPath
 
     @meshbluConfig            = _.cloneDeep meshbluConfig
     @meshbluConfig.options   ?= reconnectionAttempts: 20
@@ -26,27 +25,25 @@ class Runner extends EventEmitter
   boot: (device, callback) =>
     @stopped = @_getStoppedState device
 
-    debug 'booting up connector', uuid: device.uuid
+    @logger.debug 'booting up connector', uuid: device.uuid
     @connector = new @Connector {@logger}
     @connector.start ?= (device, callback) => callback()
     @connector.on? 'error', (error) =>
       return unless error?
-      debug 'sending error', error
-      @logger.error error, 'on error'
-      @statusDevice?.logError {error}, (updateError) =>
-        @logger.error updateError, 'error updating statusDevice with error'
+      @logger.error 'connector emitted error', error
+      @statusDevice.logError {error}
 
     @connector.on? 'message', (message) =>
       return if @stopped
 
-      debug 'sending message', message
+      @logger.debug 'sending message', message
       @meshblu.message message, (error) =>
-        @logger?.error error, 'on message' if error?
+        @logger.error error, 'on message' if error?
 
     @connector.on? 'update', (properties) =>
       return if @stopped
 
-      debug 'sending update', properties
+      @logger.debug 'sending update', properties
       {uuid, token} = @meshbluConfig
       properties = _.extend {uuid, token}, properties
       @meshblu.update properties, (error) =>
@@ -63,9 +60,9 @@ class Runner extends EventEmitter
       }
 
       @meshblu.on 'message', (message) =>
-        return debug '@meshblu.on "message" ignored cause stopped' if @stopped
+        return @logger.debug '@meshblu.on "message" ignored cause stopped' if @stopped
 
-        debug '@meshblu.on "message"'
+        @logger.debug '@meshblu.on "message"'
         fromUuid  = _.get message, 'fromUuid'
         respondTo = _.get message, 'metadata.respondTo'
         @messageHandler.onMessage message, (error, response) =>
@@ -73,22 +70,22 @@ class Runner extends EventEmitter
           @_handleMessageHandlerResponse {fromUuid, respondTo, error, response}
 
       @meshblu.on 'config', (device) =>
-        debug '@meshblu.on "config"'
+        @logger.debug '@meshblu.on "config"'
         @_exitIfStoppedChanged device
-        return debug '@meshblu.on "config" ignored cause stopped' if @stopped
+        return @logger.debug '@meshblu.on "config" ignored cause stopped' if @stopped
         @connector.onConfig? device, (error) =>
           return @_onError error if error?
 
       callback()
 
   _checkOnline: (callback) =>
-    debug 'checking online'
+    @logger.debug 'checking online'
     return unless @connector?
     return callback null, running: true unless @connector.isOnline?
     @connector.isOnline callback
 
   close: (callback=_.noop) =>
-    debug 'closing'
+    @logger.debug 'closing'
     @stopped = true
     tasks = [
       @_closeConnector
@@ -98,19 +95,19 @@ class Runner extends EventEmitter
     async.series tasks, callback
 
   _closeConnector: (callback) =>
-    debug 'close connector'
+    @logger.debug 'close connector'
     return callback() unless @connector?
     @connector.close callback
 
   _closeMeshblu: (callback) =>
-    debug 'close meshblu'
+    @logger.debug 'close meshblu'
     return callback() unless @connector?
     return callback() unless @meshblu?
     @meshblu.close callback
 
   _closeStatusDevice: (callback) =>
-    debug 'close statusDevice'
-    return callback() unless @statusDevice?
+    @logger.debug 'close statusDevice'
+    return callback() unless @statusDevice
     @statusDevice.close callback
 
   _getStoppedState: (device) =>
@@ -148,22 +145,20 @@ class Runner extends EventEmitter
       @emit 'error', error
 
   _onError: (error, callback) =>
-    @logger?.error error, 'connector start'
-    @statusDevice?.logError {error}, (updateError) =>
-      @logger?.error updateError, 'statusDevice.update'
+    @logger.error '_onError', { error }
+    @statusDevice.logError { error }
     return unless _.isFunction callback
     return callback error
 
   run: (_callback=_.noop) =>
-    debug 'running...'
+    @logger.debug 'running...'
     callback = _.once _callback
     @meshblu = new MeshbluSocketIO @meshbluConfig
 
     @meshblu.on 'error', @_handleError
 
     @meshblu.on 'notReady', (error) =>
-      console.warn 'meshblu notReady', error
-      @logger.warn error
+      @logger.warn 'meshblu notReady', error
       @_handleNotReady error
 
     @meshblu.once 'ready', =>
@@ -179,12 +174,11 @@ class Runner extends EventEmitter
     @meshblu.connect()
 
   whoami: (callback) =>
-    debug 'whoami'
+    @logger.debug 'whoami'
     @meshblu.whoami (device) =>
       callback null, device
 
   _handleError: (error) =>
-    console.error 'meshblu error', error
     @logger.error error
     @emit 'error', error
 
