@@ -46,8 +46,8 @@ class Runner extends EventEmitter
       @logger.debug 'sending update', properties
       {uuid, token} = @meshbluConfig
       properties = _.extend {uuid, token}, properties
-      @meshblu.update properties, (error) =>
-        return @_onError error if error?
+      @meshblu.update properties, (result) =>
+        @logger.debug 'meshblu update result', result
 
     @connector.start device, (error) =>
       return @_onError error, callback if error?

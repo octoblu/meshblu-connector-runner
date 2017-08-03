@@ -1,6 +1,6 @@
 {
   "name": "meshblu-connector-runner",
-  "version": "12.0.0",
+  "version": "12.0.1",
   "description": "Meshblu connector runner",
   "main": "lib/index.js",
   "scripts": {
